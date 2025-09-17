@@ -90,7 +90,7 @@
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxbes9QXnjlK1wElYnOXPd1-QmVYEjm1jprjo-imGdNCEuB7VwevPms5iPwqufbwho1/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbw0qTVoNeFj4Qu3FoGdO0gLYXmPsKZa9ZWuXpDMrZFrCXBNJnXO-eNC87QCt544fCXY/exec';
 
         const otForm = document.getElementById('ot-form');
         const leaveForm = document.getElementById('leave-form');
@@ -111,7 +111,6 @@
 
             try {
                 const response = await fetch(API_URL);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const result = await response.json();
 
                 if (result.status === "success") {
@@ -122,7 +121,6 @@
             } catch (error) {
                 console.error("Fetch Error:", error);
                 recordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Ralat: ${error.message}</td></tr>`;
-                leaveRecordsBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">-</td></tr>`;
             }
         }
 
@@ -198,7 +196,8 @@
                 document.getElementById('jumlahJamDisplay').value = `${hours} Jam ${minutes} Minit`;
             }
         }
-        ['jamMula', 'jamTamat'].forEach(id => document.getElementById(id).addEventListener('change', calculateDuration));
+        document.getElementById('jamMula').addEventListener('change', calculateDuration);
+        document.getElementById('jamTamat').addEventListener('change', calculateDuration);
 
         otForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -241,7 +240,8 @@
                 hoursNeededDisplay.textContent = '0 Jam';
             }
         }
-        ['leaveDate', 'leaveDays'].forEach(id => document.getElementById(id).addEventListener('input', calculateRequiredHours));
+        document.getElementById('leaveDate').addEventListener('input', calculateRequiredHours);
+        document.getElementById('leaveDays').addEventListener('input', calculateRequiredHours);
 
         leaveForm.addEventListener('submit', async function(e) {
             e.preventDefault();
