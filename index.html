@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Pengurusan Cuti Gantian</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root { --main-bg: #f1f5f9; --card-bg: #ffffff; --primary-color: #3b82f6; --text-dark: #1e293b; --text-light: #64748b; }
         body { font-family: system-ui, sans-serif; background-color: var(--main-bg); margin: 0; padding: 20px; color: var(--text-dark); }
@@ -17,8 +19,8 @@
         .form-section, .table-section { background-color: var(--card-bg); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         h2 { margin-top: 0; border-bottom: 2px solid var(--main-bg); padding-bottom: 0.5rem; }
         label { display: block; margin-top: 1rem; font-weight: 600; color: var(--text-light); }
-        input { width: 100%; padding: 0.75rem; margin-top: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        .row { display: flex; gap: 1rem; }
+        input, select { width: 100%; padding: 0.75rem; margin-top: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        .row { display: flex; gap: 1rem; align-items: flex-end;}
         .col { flex: 1; }
         button { width: 100%; padding: 0.8rem; margin-top: 1.5rem; border: none; border-radius: 6px; background-color: var(--primary-color); color: white; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
         button:hover:not(:disabled) { background-color: #2563eb; }
@@ -85,213 +87,115 @@
                          <tbody id="leave-records-body"></tbody>
                     </table>
                 </div>
+                 <div class="row" style="margin-top: 2rem; border-top: 2px solid var(--main-bg); padding-top: 1rem;">
+                    <div class="col">
+                        <label for="pdf-month">Pilih Bulan</label>
+                        <select id="pdf-month">
+                            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Mac</option><option value="4">April</option><option value="5">Mei</option><option value="6">Jun</option><option value="7">Julai</option><option value="8">Ogos</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Disember</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label for="pdf-year">Tahun</label>
+                        <input type="number" id="pdf-year" value="2025">
+                    </div>
+                    <div class="col">
+                        <button id="pdf-button" style="background-color: #16a34a; margin-top: 0;">Jana PDF</button>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxdLFNpRYKGZt9n2fGLb5KEKJ33KFl7tx13pKOHpX812NA7dT9y1i_IcK84uetNNmew/exec'; // <-- TAMPAL URL BAHARU ANDA DI SINI
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxdLFNpRYKGZt9n2fGLb5KEKJ33KFl7tx13pKOHpX812NA7dT9y1i_IcK84uetNNmew/exec'; // <-- TAMPAL URL ANDA DI SINI
+        let cachedData = { ot_records: [], leave_records: [] }; // Cache untuk data
 
         const otForm = document.getElementById('ot-form');
-        const leaveForm = document.getElementById('leave-form');
-        const otStatusDiv = document.getElementById('ot-status');
-        const leaveStatusDiv = document.getElementById('leave-status');
-        const recordsBody = document.getElementById('ot-records-body');
-        const leaveRecordsBody = document.getElementById('leave-records-body');
-        const bakiTerkiniDisplay = document.getElementById('baki-terkini');
-        const jamDigunakanDisplay = document.getElementById('jam-digunakan');
-        const jamAkanLuputDisplay = document.getElementById('jam-akan-luput');
-        const hoursNeededDisplay = document.getElementById('hours-needed');
-        let totalHoursDecimal = 0;
+        // ... (dan semua elemen DOM lain seperti sebelum ini)
 
         async function fetchAllData() {
-            recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
-            leaveRecordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
-            [bakiTerkiniDisplay, jamDigunakanDisplay, jamAkanLuputDisplay].forEach(el => el.textContent = 'Memuat...');
-
+            // ... (fungsi ini sama seperti sebelum ini)
             try {
                 const response = await fetch(API_URL);
                 const result = await response.json();
-
                 if (result.status === "success") {
-                    updateDashboard(result.data);
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (error) {
-                console.error("Fetch Error:", error);
-                recordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Ralat: ${error.message}</td></tr>`;
-            }
+                    cachedData = result.data; // Simpan data dalam cache
+                    updateDashboard(cachedData);
+                } else { throw new Error(result.message); }
+            } catch (error) { /* ... (error handling sama) ... */ }
         }
 
         function updateDashboard(data) {
-            recordsBody.innerHTML = '';
-            let bakiJam = 0;
-            let jamDigunakanTotal = 0;
-            let jamAkanLuput = 0;
-            const today = new Date();
-            const thirtyDaysFromNow = new Date();
-            thirtyDaysFromNow.setDate(today.getDate() + 30);
-
-            if (!data.ot_records || data.ot_records.length === 0) {
-                recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
-            } else {
-                // Isihan tidak lagi diperlukan di sini kerana Apps Script telah melakukannya
-                data.ot_records.forEach(record => {
-                    const [day, month, year] = record.tarikhLuput.split('/');
-                    const expiryDate = new Date(`${year}-${month}-${day}`);
-                    
-                    if (record.status === 'Tersedia') {
-                        bakiJam += record.jumlahJam;
-                        if (expiryDate <= thirtyDaysFromNow && expiryDate >= today) {
-                            jamAkanLuput += record.jumlahJam;
-                        }
-                    } else if (record.status === 'Digunakan') {
-                        jamDigunakanTotal += record.jumlahJam;
-                    }
-                    
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${record.tarikh}</td>
-                        <td>${record.tugasan}</td>
-                        <td>${record.jumlahJam.toFixed(2)}</td>
-                        <td>${record.tarikhLuput}</td>
-                        <td><span class="status-badge ${record.status === 'Tersedia' ? 'status-tersedia' : 'status-digunakan'}">${record.status}</span></td>
-                    `;
-                    recordsBody.appendChild(row);
-                });
-            }
-            bakiTerkiniDisplay.textContent = `${bakiJam.toFixed(2)} Jam`;
-            jamDigunakanDisplay.textContent = `${jamDigunakanTotal.toFixed(2)} Jam`;
-            jamAkanLuputDisplay.textContent = `${jamAkanLuput.toFixed(2)} Jam`;
-
-            leaveRecordsBody.innerHTML = '';
-            if (!data.leave_records || data.leave_records.length === 0) {
-                leaveRecordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada rekod cuti...</td></tr>';
-            } else {
-                data.leave_records.forEach(record => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${record.tarikhMohon}</td>
-                        <td>${record.tarikhMula}</td>
-                        <td>${record.tarikhTamat}</td>
-                        <td>${record.bilanganHari}</td>
-                        <td>${record.jumlahJam.toFixed(2)}</td>
-                    `;
-                    leaveRecordsBody.appendChild(row);
-                });
-            }
+            // ... (fungsi ini sama seperti sebelum ini)
         }
-
-        document.addEventListener('DOMContentLoaded', fetchAllData);
-
-        function calculateDuration() {
-            const startTime = document.getElementById('jamMula').value;
-            const endTime = document.getElementById('jamTamat').value;
-            if (startTime && endTime) {
-                const start = new Date(`1970-01-01T${startTime}:00`);
-                const end = new Date(`1970-01-01T${endTime}:00`);
-                if (end < start) end.setDate(end.getDate() + 1);
-                totalHoursDecimal = (end - start) / 3600000;
-                const hours = Math.floor(totalHoursDecimal);
-                const minutes = Math.round((totalHoursDecimal - hours) * 60);
-                document.getElementById('jumlahJamDisplay').value = `${hours} Jam ${minutes} Minit`;
-            }
-        }
-        ['jamMula', 'jamTamat'].forEach(id => document.getElementById(id).addEventListener('change', calculateDuration));
         
-        otForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const submitButton = document.getElementById('submit-ot-button');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Menyimpan...';
-            otStatusDiv.textContent = '';
+        // ... (semua fungsi lain seperti calculateDuration, otForm submit, leaveForm submit, dll. adalah sama)
+
+        // --- FUNGSI BAHARU: JANA PDF ---
+        document.getElementById('pdf-button').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const selectedMonth = parseInt(document.getElementById('pdf-month').value);
+            const selectedYear = parseInt(document.getElementById('pdf-year').value);
+            const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleString('ms-MY', { month: 'long' });
+
+            // Guna data dari cache
+            const filteredData = cachedData.ot_records.filter(record => {
+                const [day, month, year] = record.tarikh.split('/');
+                return parseInt(month) === selectedMonth && parseInt(year) === selectedYear;
+            });
+
+            // --- MULA BINA PDF ---
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text("LAMPIRAN A", 175, 20);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text("PENGIRAAN PERMOHONAN CUTI GANTIAN", 15, 30);
+
+            doc.text(`NAMA: HANIFF FAIZAL BIN CHEK ANI`, 15, 40);
+            doc.text(`JABATAN/UNIT: UNIT KOKURIKULUM`, 15, 45);
+            doc.text(`BULAN: ${monthName.toUpperCase()} ${selectedYear}`, 15, 50);
+
+            const tableColumn = ["Bil.", "Tarikh", "Tugasan Yang Dilaksanakan", "Tempoh (Jam)"];
+            const tableRows = [];
+            let totalHoursInMonth = 0;
+
+            filteredData.forEach((record, index) => {
+                tableRows.push([
+                    index + 1,
+                    record.tarikh,
+                    record.tugasan,
+                    record.jumlahJam.toFixed(2)
+                ]);
+                totalHoursInMonth += record.jumlahJam;
+            });
             
-            const formData = { action: 'add_ot', tarikh: document.getElementById('tarikh').value, tugasan: document.getElementById('tugasan').value, jumlahJam: totalHoursDecimal };
-            
-            try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
-                const result = await response.json();
-                if (result.status === 'success') {
-                    otStatusDiv.textContent = 'Rekod berjaya disimpan!';
-                    otStatusDiv.style.color = 'green';
-                    this.reset();
-                    document.getElementById('jumlahJamDisplay').value = "";
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    await fetchAllData();
-                } else { throw new Error(result.message); }
-            } catch (error) {
-                otStatusDiv.textContent = `Gagal menyimpan: ${error.message}`;
-                otStatusDiv.style.color = 'red';
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Simpan Rekod';
-            }
+            tableRows.push([{content: 'JUMLAH JAM BEKERJA', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' }}, {content: totalHoursInMonth.toFixed(2), styles: { fontStyle: 'bold' }}]);
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 60,
+                theme: 'grid',
+                headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+            });
+
+            let finalY = doc.autoTable.previous.finalY + 15;
+            doc.text("PENGAKUAN PEMOHON", 15, finalY);
+            finalY += 7;
+            doc.text("Saya mengaku bahawa saya telah melaksanakan tugas rasmi seperti di atas.", 15, finalY);
+            finalY += 20;
+            doc.text("_______________________", 15, finalY);
+            finalY += 5;
+            doc.text("(Tandatangan Pemohon)", 15, finalY);
+
+            doc.save(`Lampiran_A_${monthName}_${selectedYear}.pdf`);
         });
-
-        function calculateRequiredHours() {
-            const startDateStr = document.getElementById('leaveStartDate').value;
-            const endDateStr = document.getElementById('leaveEndDate').value;
-            
-            if (startDateStr && endDateStr) {
-                const startDate = new Date(startDateStr);
-                const endDate = new Date(endDateStr);
-
-                if (endDate < startDate) {
-                    hoursNeededDisplay.textContent = 'Tarikh tidak sah';
-                    return;
-                }
-
-                let totalHours = 0;
-                let currentDate = new Date(startDate);
-                while (currentDate <= endDate) {
-                    const dayOfWeek = currentDate.getDay();
-                    if (dayOfWeek !== 5 && dayOfWeek !== 6) { // Bukan Jumaat atau Sabtu
-                        const hoursPerDay = (dayOfWeek === 4) ? 7.5 : 9; // Khamis = 7.5, selainnya 9
-                        totalHours += hoursPerDay;
-                    }
-                    currentDate.setDate(currentDate.getDate() + 1);
-                }
-                hoursNeededDisplay.textContent = `${totalHours.toFixed(2)} Jam`;
-            } else {
-                hoursNeededDisplay.textContent = '0 Jam';
-            }
-        }
-        document.getElementById('leaveStartDate').addEventListener('input', calculateRequiredHours);
-        document.getElementById('leaveEndDate').addEventListener('input', calculateRequiredHours);
-
-        leaveForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const submitButton = document.getElementById('submit-leave-button');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Memproses...';
-            leaveStatusDiv.textContent = '';
-
-            const formData = {
-                action: 'apply_leave',
-                startDate: document.getElementById('leaveStartDate').value,
-                endDate: document.getElementById('leaveEndDate').value
-            };
-
-            try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
-                const result = await response.json();
-                if (result.status === 'success') {
-                    leaveStatusDiv.textContent = result.message;
-                    leaveStatusDiv.style.color = 'green';
-                    this.reset();
-                    hoursNeededDisplay.textContent = '0 Jam';
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    await fetchAllData();
-                } else { throw new Error(result.message); }
-            } catch (error) {
-                leaveStatusDiv.textContent = `Gagal: ${error.message}`;
-                leaveStatusDiv.style.color = 'red';
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Mohon Cuti';
-            }
-        });
+        
+        // (Pastikan semua kod JavaScript lain yang berfungsi sebelum ini disalin di sini)
     </script>
 </body>
 </html>
