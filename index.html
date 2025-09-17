@@ -36,7 +36,7 @@
         <header class="header"><h1>Sistem Pengurusan Cuti Gantian</h1></header>
         
         <section class="stats-grid">
-            <div class="stat-card"><h3>Baki Terkini</h3><p>0 Jam</p></div>
+            <div class="stat-card"><h3>Baki Terkini</h3><p id="baki-terkini">0 Jam</p></div>
             <div class="stat-card"><h3>Jam Digunakan</h3><p>0 Jam</p></div>
             <div class="stat-card"><h3>Jam Akan Luput</h3><p>0 Jam</p></div>
         </section>
@@ -86,7 +86,7 @@
                             </tr>
                         </thead>
                         <tbody id="ot-records-body">
-                            <tr><td colspan="5" style="text-align:center; padding: 2rem;">Tiada data...</td></tr>
+                            <tr><td colspan="5" style="text-align:center; padding: 2rem;">Memuatkan data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -99,9 +99,59 @@
         const otForm = document.getElementById('ot-form');
         const statusDiv = document.getElementById('status');
         const submitButton = document.getElementById('submit-button');
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyHCt51O_npGmtyVcU_SMaik94SgbEjGRNHtvxG6w5E8qJohSv7Fw0alUdQMPQndKPt/exec';
+        const recordsBody = document.getElementById('ot-records-body');
+        const bakiTerkiniDisplay = document.getElementById('baki-terkini');
 
-        // --- PENGIRAAN JAM & MINIT UNTUK BORANG OT ---
+        // URL UNTUK MENGHANTAR DATA (doPost) - URL LAMA ANDA
+        const POST_URL = 'https://script.google.com/macros/s/AKfycbyHCt51O_npGmtyVcU_SMaik94SgbEjGRNHtvxG6w5E8qJohSv7Fw0alUdQMPQndKPt/exec';
+        
+        // URL UNTUK MEMBACA DATA (doGet) - URL BAHARU ANDA
+        const GET_URL = 'https://script.google.com/macros/s/AKfycbyqa6qB_CygIDO1YUwj6Zso4aisZtxThVLKmZo-IFqAe5vUwza7pjP5qHgDZQKoR_bn/exec';
+
+        // --- FUNGSI UTAMA: Ambil dan Paparkan Data ---
+        function fetchAndDisplayData() {
+            recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">Memuatkan data...</td></tr>';
+            
+            fetch(GET_URL)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === "success") {
+                        recordsBody.innerHTML = ''; // Kosongkan jadual
+                        let bakiJam = 0;
+
+                        if (result.data.length === 0) {
+                             recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">Tiada data...</td></tr>';
+                        } else {
+                            result.data.forEach(record => {
+                                if (record.status === 'Tersedia') {
+                                    bakiJam += parseFloat(record.jumlahJam);
+                                }
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${record.tarikh}</td>
+                                    <td>${record.tugasan}</td>
+                                    <td>${parseFloat(record.jumlahJam).toFixed(2)}</td>
+                                    <td>${record.tarikhLuput}</td>
+                                    <td><span class="status-badge status-tersedia">${record.status}</span></td>
+                                `;
+                                recordsBody.appendChild(row);
+                            });
+                        }
+                        // Kemas kini paparan baki jam
+                        bakiTerkiniDisplay.textContent = `${bakiJam.toFixed(2)} Jam`;
+                    } else {
+                        recordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 2rem; color:red;">Gagal memuatkan data.</td></tr>`;
+                    }
+                })
+                .catch(error => {
+                    recordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 2rem; color:red;">Ralat rangkaian. Sila semak sambungan internet.</td></tr>`;
+                });
+        }
+
+        // Panggil fungsi ini sebaik sahaja halaman dimuatkan
+        document.addEventListener('DOMContentLoaded', fetchAndDisplayData);
+
+        // --- FUNGSI PENGIRAAN JAM UNTUK BORANG OT ---
         const jamMulaInput = document.getElementById('jamMula');
         const jamTamatInput = document.getElementById('jamTamat');
         const jumlahJamDisplay = document.getElementById('jumlahJam');
@@ -110,20 +160,14 @@
         function calculateDuration() {
             const startTime = jamMulaInput.value;
             const endTime = jamTamatInput.value;
-
             if (startTime && endTime) {
                 const start = new Date(`1970-01-01T${startTime}:00`);
                 const end = new Date(`1970-01-01T${endTime}:00`);
-
-                if (end < start) {
-                    end.setDate(end.getDate() + 1); // Handle overnight work
-                }
-
+                if (end < start) { end.setDate(end.getDate() + 1); }
                 const diffMs = end - start;
                 const totalMinutes = Math.floor(diffMs / 60000);
                 const hours = Math.floor(totalMinutes / 60);
                 const minutes = totalMinutes % 60;
-                
                 totalHoursDecimal = totalMinutes / 60;
                 jumlahJamDisplay.value = `${hours} Jam ${minutes} Minit`;
             }
@@ -131,10 +175,9 @@
         jamMulaInput.addEventListener('change', calculateDuration);
         jamTamatInput.addEventListener('change', calculateDuration);
 
-        // --- PENGHANTARAN BORANG OT ---
+        // --- FUNGSI MENGHANTAR BORANG OT ---
         otForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
             submitButton.disabled = true;
             submitButton.textContent = 'Menyimpan...';
             statusDiv.textContent = '';
@@ -145,17 +188,14 @@
                 jumlahJam: totalHoursDecimal.toFixed(2)
             };
             
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(formData)
-            })
+            fetch(POST_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(formData) })
             .then(res => {
                 statusDiv.textContent = 'Rekod berjaya disimpan!';
                 statusDiv.style.color = 'green';
                 otForm.reset();
                 jumlahJamDisplay.value = "";
-                // FUNGSI UNTUK MUAT SEMULA JADUAL AKAN DITAMBAH NANTI
+                // Tunggu sekejap sebelum memuat semula data untuk beri masa Google Sheet mengupdate
+                setTimeout(fetchAndDisplayData, 2000); 
             })
             .catch(error => {
                 statusDiv.textContent = 'Gagal menyimpan. Sila cuba lagi.';
@@ -166,14 +206,6 @@
                 submitButton.textContent = 'Simpan Rekod';
             });
         });
-
-        // --- FUNGSI UNTUK MEMAPARKAN DATA DARI GOOGLE SHEET AKAN DITAMBAH DI SINI ---
-        
-        // --- FUNGSI UNTUK MENGIRA JAM CUTI AKAN DITAMBAH DI SINI ---
-
-        // --- FUNGSI UNTUK MEMOHON CUTI AKAN DITAMBAH DI SINI ---
-
-        // --- FUNGSI UNTUK MENJANA PDF AKAN DITAMBAH DI SINI ---
 
     </script>
 </body>
