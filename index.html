@@ -91,11 +91,9 @@
 
     <script>
         // --- CONFIGURATION ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbyqa6qB_CygIDO1YUwj6Zso4aisZtxThVLKmZo-IFqAe5vUwza7pjP5qHgDZQKoR_bn/exec'; // URL Tunggal untuk semua operasi
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxZPagUpjkd4xsJ13zjuMbL8ynv8CtnS69EC8SC_Qd8NptdyDfLt5-UlCS71UbFOGU/exec';
 
         // --- DOM ELEMENTS ---
-        const otForm = document.getElementById('ot-form');
-        const leaveForm = document.getElementById('leave-form');
         const otStatusDiv = document.getElementById('ot-status');
         const leaveStatusDiv = document.getElementById('leave-status');
         const recordsBody = document.getElementById('ot-records-body');
@@ -111,7 +109,7 @@
             leaveRecordsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuatkan data...</td></tr>';
             
             try {
-                const response = await fetch(`${API_URL}?action=get_all_data`);
+                const response = await fetch(API_URL);
                 const result = await response.json();
 
                 if (result.status === "success") {
@@ -156,9 +154,11 @@
                             leaveRecordsBody.appendChild(row);
                         });
                     }
+                } else {
+                     throw new Error(result.message);
                 }
             } catch (error) {
-                recordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Ralat memuatkan data.</td></tr>`;
+                recordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Ralat: ${error.message}</td></tr>`;
             }
         }
         document.addEventListener('DOMContentLoaded', fetchAllData);
@@ -179,7 +179,7 @@
         }
         ['jamMula', 'jamTamat'].forEach(id => document.getElementById(id).addEventListener('change', calculateDuration));
 
-        otForm.addEventListener('submit', async function(e) {
+        document.getElementById('ot-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const submitButton = document.getElementById('submit-ot-button');
             submitButton.disabled = true;
@@ -198,8 +198,9 @@
                 if (result.status === 'success') {
                     otStatusDiv.textContent = 'Rekod berjaya disimpan!';
                     otStatusDiv.style.color = 'green';
-                    otForm.reset();
+                    this.reset();
                     document.getElementById('jumlahJam').value = "";
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for sheet to update
                     await fetchAllData();
                 } else {
                     throw new Error(result.message);
@@ -228,7 +229,7 @@
         }
         ['leaveDate', 'leaveDays'].forEach(id => document.getElementById(id).addEventListener('input', calculateRequiredHours));
 
-        leaveForm.addEventListener('submit', async function(e) {
+        document.getElementById('leave-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const submitButton = document.getElementById('submit-leave-button');
             submitButton.disabled = true;
@@ -246,8 +247,9 @@
                 if (result.status === 'success') {
                     leaveStatusDiv.textContent = result.message;
                     leaveStatusDiv.style.color = 'green';
-                    leaveForm.reset();
+                    this.reset();
                     hoursNeededDisplay.textContent = '0 Jam';
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for sheet to update
                     await fetchAllData();
                 } else {
                     throw new Error(result.message);
