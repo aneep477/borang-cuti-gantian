@@ -40,7 +40,7 @@
         <section class="stats-grid">
             <div class="stat-card"><h3>Baki Terkini</h3><p id="baki-terkini">Memuat...</p></div>
             <div class="stat-card"><h3>Jam Digunakan</h3><p id="jam-digunakan">Memuat...</p></div>
-            <div class="stat-card"><h3>Jam Akan Luput</h3><p>0 Jam</p></div>
+            <div class="stat-card"><h3>Jam Akan Luput</h3><p id="jam-akan-luput">Memuat...</p></div>
         </section>
 
         <main class="main-layout">
@@ -54,7 +54,7 @@
                             <div><label for="jamMula">Masa Mula</label><input type="time" id="jamMula" required></div>
                             <div><label for="jamTamat">Masa Tamat</label><input type="time" id="jamTamat" required></div>
                         </div>
-                        <label for="jumlahJam">Jumlah Jam & Minit</label><input type="text" id="jumlahJam" disabled style="font-weight: bold; background-color: #f8fafc;">
+                        <label for="jumlahJamDisplay">Jumlah Jam & Minit</label><input type="text" id="jumlahJamDisplay" disabled style="font-weight: bold; background-color: #f8fafc;">
                         <button type="submit" id="submit-ot-button">Simpan Rekod</button>
                         <div id="ot-status" class="status-message"></div>
                     </form>
@@ -90,81 +90,100 @@
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbyH7vk18Jgvi-n8fs8SOjW5VixjDV4Ttl2XozK3DXKdbE9gw9zTPpo4_vnX7rrPBsO_/exec';
+        const API_URL = 'URL_WEB_APP_ANDA_YANG_TERKINI';
 
-        // --- DOM ELEMENTS ---
+        const otForm = document.getElementById('ot-form');
+        const leaveForm = document.getElementById('leave-form');
         const otStatusDiv = document.getElementById('ot-status');
         const leaveStatusDiv = document.getElementById('leave-status');
         const recordsBody = document.getElementById('ot-records-body');
         const leaveRecordsBody = document.getElementById('leave-records-body');
         const bakiTerkiniDisplay = document.getElementById('baki-terkini');
         const jamDigunakanDisplay = document.getElementById('jam-digunakan');
+        const jamAkanLuputDisplay = document.getElementById('jam-akan-luput');
         const hoursNeededDisplay = document.getElementById('hours-needed');
         let totalHoursDecimal = 0;
 
-        // --- MAIN DATA FUNCTION ---
         async function fetchAllData() {
+            // Set UI to loading state
             recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
             leaveRecordsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuatkan data...</td></tr>';
-            
+            [bakiTerkiniDisplay, jamDigunakanDisplay, jamAkanLuputDisplay].forEach(el => el.textContent = 'Memuat...');
+
             try {
                 const response = await fetch(API_URL);
                 const result = await response.json();
 
                 if (result.status === "success") {
-                    // Paparkan Data OT
-                    recordsBody.innerHTML = '';
-                    let bakiJam = 0;
-                    let jamDigunakanTotal = 0;
-                    if (result.data.ot_records.length === 0) {
-                        recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
-                    } else {
-                        result.data.ot_records.forEach(record => {
-                            if (record.status === 'Tersedia') bakiJam += record.jumlahJam;
-                            if (record.status === 'Digunakan') jamDigunakanTotal += record.jumlahJam;
-                            
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${record.tarikh}</td>
-                                <td>${record.tugasan}</td>
-                                <td>${record.jumlahJam.toFixed(2)}</td>
-                                <td>${record.tarikhLuput}</td>
-                                <td><span class="status-badge ${record.status === 'Tersedia' ? 'status-tersedia' : 'status-digunakan'}">${record.status}</span></td>
-                            `;
-                            recordsBody.appendChild(row);
-                        });
-                    }
-                    bakiTerkiniDisplay.textContent = `${bakiJam.toFixed(2)} Jam`;
-                    jamDigunakanDisplay.textContent = `${jamDigunakanTotal.toFixed(2)} Jam`;
-
-                    // Paparkan Sejarah Cuti
-                    leaveRecordsBody.innerHTML = '';
-                     if (result.data.leave_records.length === 0) {
-                        leaveRecordsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tiada rekod cuti...</td></tr>';
-                    } else {
-                        result.data.leave_records.forEach(record => {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${record.tarikhMohon}</td>
-                                <td>${record.tarikhCuti}</td>
-                                <td>${record.bilanganHari}</td>
-                                <td>${record.jumlahJam.toFixed(2)}</td>
-                            `;
-                            leaveRecordsBody.appendChild(row);
-                        });
-                    }
+                    updateDashboard(result.data);
                 } else {
-                     throw new Error(result.message);
+                    throw new Error(result.message);
                 }
             } catch (error) {
                 console.error("Fetch Error:", error);
                 recordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Ralat: ${error.message}</td></tr>`;
             }
         }
+
+        function updateDashboard(data) {
+            // Update OT Table and calculate stats
+            recordsBody.innerHTML = '';
+            let bakiJam = 0;
+            let jamDigunakanTotal = 0;
+            let jamAkanLuput = 0;
+            const today = new Date();
+            const thirtyDaysFromNow = new Date();
+            thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+            if (!data.ot_records || data.ot_records.length === 0) {
+                recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
+            } else {
+                data.ot_records.forEach(record => {
+                    if (record.status === 'Tersedia') {
+                        bakiJam += record.jumlahJam;
+                        const expiryDate = new Date(record.tarikhLuput.split('/').reverse().join('-'));
+                        if (expiryDate <= thirtyDaysFromNow && expiryDate >= today) {
+                            jamAkanLuput += record.jumlahJam;
+                        }
+                    } else if (record.status === 'Digunakan') {
+                        jamDigunakanTotal += record.jumlahJam;
+                    }
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${record.tarikh}</td>
+                        <td>${record.tugasan}</td>
+                        <td>${record.jumlahJam.toFixed(2)}</td>
+                        <td>${record.tarikhLuput}</td>
+                        <td><span class="status-badge ${record.status === 'Tersedia' ? 'status-tersedia' : 'status-digunakan'}">${record.status}</span></td>
+                    `;
+                    recordsBody.appendChild(row);
+                });
+            }
+            bakiTerkiniDisplay.textContent = `${bakiJam.toFixed(2)} Jam`;
+            jamDigunakanDisplay.textContent = `${jamDigunakanTotal.toFixed(2)} Jam`;
+            jamAkanLuputDisplay.textContent = `${jamAkanLuput.toFixed(2)} Jam`;
+
+            // Update Leave History Table
+            leaveRecordsBody.innerHTML = '';
+             if (!data.leave_records || data.leave_records.length === 0) {
+                leaveRecordsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tiada rekod cuti...</td></tr>';
+            } else {
+                data.leave_records.forEach(record => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${record.tarikhMohon}</td>
+                        <td>${record.tarikhCuti}</td>
+                        <td>${record.bilanganHari}</td>
+                        <td>${record.jumlahJam.toFixed(2)}</td>
+                    `;
+                    leaveRecordsBody.appendChild(row);
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', fetchAllData);
 
-        // --- OT FORM LOGIC ---
         function calculateDuration() {
             const startTime = document.getElementById('jamMula').value;
             const endTime = document.getElementById('jamTamat').value;
@@ -175,24 +194,20 @@
                 totalHoursDecimal = (end - start) / 3600000;
                 const hours = Math.floor(totalHoursDecimal);
                 const minutes = Math.round((totalHoursDecimal - hours) * 60);
-                document.getElementById('jumlahJam').value = `${hours} Jam ${minutes} Minit`;
+                document.getElementById('jumlahJamDisplay').value = `${hours} Jam ${minutes} Minit`;
             }
         }
-        ['jamMula', 'jamTamat'].forEach(id => document.getElementById(id).addEventListener('change', calculateDuration));
+        document.getElementById('jamMula').addEventListener('change', calculateDuration);
+        document.getElementById('jamTamat').addEventListener('change', calculateDuration);
 
-        document.getElementById('ot-form').addEventListener('submit', async function(e) {
+        otForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const submitButton = document.getElementById('submit-ot-button');
             submitButton.disabled = true;
             submitButton.textContent = 'Menyimpan...';
             otStatusDiv.textContent = '';
             
-            const formData = {
-                action: 'add_ot',
-                tarikh: document.getElementById('tarikh').value,
-                tugasan: document.getElementById('tugasan').value,
-                jumlahJam: totalHoursDecimal
-            };
+            const formData = { action: 'add_ot', tarikh: document.getElementById('tarikh').value, tugasan: document.getElementById('tugasan').value, jumlahJam: totalHoursDecimal };
             
             try {
                 const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
@@ -201,12 +216,10 @@
                     otStatusDiv.textContent = 'Rekod berjaya disimpan!';
                     otStatusDiv.style.color = 'green';
                     this.reset();
-                    document.getElementById('jumlahJam').value = "";
+                    document.getElementById('jumlahJamDisplay').value = "";
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     await fetchAllData();
-                } else {
-                    throw new Error(result.message);
-                }
+                } else { throw new Error(result.message); }
             } catch (error) {
                 otStatusDiv.textContent = `Gagal menyimpan: ${error.message}`;
                 otStatusDiv.style.color = 'red';
@@ -216,33 +229,29 @@
             }
         });
 
-        // --- LEAVE FORM LOGIC ---
         function calculateRequiredHours() {
             const leaveDate = document.getElementById('leaveDate').value;
             const leaveDays = parseFloat(document.getElementById('leaveDays').value);
             if (leaveDate && leaveDays > 0) {
                 const dayOfWeek = new Date(leaveDate).getDay();
-                const hoursPerDay = (dayOfWeek >= 0 && dayOfWeek <= 3) ? 9 : 7.5; // Ahad-Rabu = 9, selainnya 7.5
+                const hoursPerDay = (dayOfWeek >= 0 && dayOfWeek <= 3) ? 9 : 7.5; // Sun-Wed = 9, others 7.5
                 const requiredHours = leaveDays * hoursPerDay;
                 hoursNeededDisplay.textContent = `${requiredHours.toFixed(2)} Jam`;
             } else {
                 hoursNeededDisplay.textContent = '0 Jam';
             }
         }
-        ['leaveDate', 'leaveDays'].forEach(id => document.getElementById(id).addEventListener('input', calculateRequiredHours));
+        document.getElementById('leaveDate').addEventListener('input', calculateRequiredHours);
+        document.getElementById('leaveDays').addEventListener('input', calculateRequiredHours);
 
-        document.getElementById('leave-form').addEventListener('submit', async function(e) {
+        leaveForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const submitButton = document.getElementById('submit-leave-button');
             submitButton.disabled = true;
             submitButton.textContent = 'Memproses...';
             leaveStatusDiv.textContent = '';
 
-            const formData = {
-                action: 'apply_leave',
-                leaveDate: document.getElementById('leaveDate').value,
-                leaveDays: document.getElementById('leaveDays').value
-            };
+            const formData = { action: 'apply_leave', leaveDate: document.getElementById('leaveDate').value, leaveDays: document.getElementById('leaveDays').value };
 
             try {
                 const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
@@ -254,9 +263,7 @@
                     hoursNeededDisplay.textContent = '0 Jam';
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     await fetchAllData();
-                } else {
-                    throw new Error(result.message);
-                }
+                } else { throw new Error(result.message); }
             } catch (error) {
                 leaveStatusDiv.textContent = `Gagal: ${error.message}`;
                 leaveStatusDiv.style.color = 'red';
