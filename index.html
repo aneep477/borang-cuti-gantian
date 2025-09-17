@@ -62,8 +62,10 @@
                 <section class="form-section" style="margin-top: 2rem;">
                     <h2>Mohon Cuti Gantian</h2>
                     <form id="leave-form">
-                        <label for="leaveDate">Tarikh Mula Cuti</label><input type="date" id="leaveDate" required>
-                        <label for="leaveDays">Bilangan Hari</label><input type="number" id="leaveDays" min="0.5" step="0.5" required>
+                        <div class="row">
+                           <div class="col"><label for="leaveStartDate">Tarikh Mula Cuti</label><input type="date" id="leaveStartDate" required></div>
+                           <div class="col"><label for="leaveEndDate">Tarikh Tamat Cuti</label><input type="date" id="leaveEndDate" required></div>
+                        </div>
                         <p style="margin-top:1rem; text-align:center;">Jam Diperlukan: <strong id="hours-needed">0 Jam</strong></p>
                         <button type="submit" id="submit-leave-button">Mohon Cuti</button>
                         <div id="leave-status" class="status-message"></div>
@@ -81,7 +83,7 @@
                  <h2 style="margin-top: 2rem;">Sejarah Cuti Diambil</h2>
                  <div style="max-height: 200px; overflow-y: auto;">
                     <table class="data-table">
-                         <thead><tr><th>Tarikh Mohon</th><th>Tarikh Cuti</th><th>Hari</th><th>Jam Digunakan</th></tr></thead>
+                         <thead><tr><th>Tarikh Mohon</th><th>Mula Cuti</th><th>Tamat Cuti</th><th>Hari Bekerja</th><th>Jam Digunakan</th></tr></thead>
                          <tbody id="leave-records-body"></tbody>
                     </table>
                 </div>
@@ -90,7 +92,7 @@
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbw0qTVoNeFj4Qu3FoGdO0gLYXmPsKZa9ZWuXpDMrZFrCXBNJnXO-eNC87QCt544fCXY/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyKR0H2BXEQEVOBqSWQVokomql0MAcAo2zLMsS_13qGSnkerD7Mk6qcMBhKmf25OvTa/exec';
 
         const otForm = document.getElementById('ot-form');
         const leaveForm = document.getElementById('leave-form');
@@ -106,7 +108,7 @@
 
         async function fetchAllData() {
             recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
-            leaveRecordsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuatkan data...</td></tr>';
+            leaveRecordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
             [bakiTerkiniDisplay, jamDigunakanDisplay, jamAkanLuputDisplay].forEach(el => el.textContent = 'Memuat...');
 
             try {
@@ -136,7 +138,7 @@
             if (!data.ot_records || data.ot_records.length === 0) {
                 recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
             } else {
-                data.ot_records.forEach(record => {
+                data.ot_records.sort((a, b) => new Date(a.tarikh.split('/').reverse().join('-')) - new Date(b.tarikh.split('/').reverse().join('-'))).forEach(record => {
                     const [day, month, year] = record.tarikhLuput.split('/');
                     const expiryDate = new Date(`${year}-${month}-${day}`);
                     
@@ -165,14 +167,15 @@
             jamAkanLuputDisplay.textContent = `${jamAkanLuput.toFixed(2)} Jam`;
 
             leaveRecordsBody.innerHTML = '';
-             if (!data.leave_records || data.leave_records.length === 0) {
-                leaveRecordsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tiada rekod cuti...</td></tr>';
+            if (!data.leave_records || data.leave_records.length === 0) {
+                leaveRecordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada rekod cuti...</td></tr>';
             } else {
                 data.leave_records.forEach(record => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${record.tarikhMohon}</td>
-                        <td>${record.tarikhCuti}</td>
+                        <td>${record.tarikhMula}</td>
+                        <td>${record.tarikhTamat}</td>
                         <td>${record.bilanganHari}</td>
                         <td>${record.jumlahJam.toFixed(2)}</td>
                     `;
@@ -196,9 +199,8 @@
                 document.getElementById('jumlahJamDisplay').value = `${hours} Jam ${minutes} Minit`;
             }
         }
-        document.getElementById('jamMula').addEventListener('change', calculateDuration);
-        document.getElementById('jamTamat').addEventListener('change', calculateDuration);
-
+        ['jamMula', 'jamTamat'].forEach(id => document.getElementById(id).addEventListener('change', calculateDuration));
+        
         otForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const submitButton = document.getElementById('submit-ot-button');
@@ -229,19 +231,35 @@
         });
 
         function calculateRequiredHours() {
-            const leaveDate = document.getElementById('leaveDate').value;
-            const leaveDays = parseFloat(document.getElementById('leaveDays').value);
-            if (leaveDate && leaveDays > 0) {
-                const dayOfWeek = new Date(leaveDate).getDay();
-                const hoursPerDay = (dayOfWeek >= 0 && dayOfWeek <= 3) ? 9 : 7.5; // Sun-Wed = 9, others 7.5
-                const requiredHours = leaveDays * hoursPerDay;
-                hoursNeededDisplay.textContent = `${requiredHours.toFixed(2)} Jam`;
+            const startDateStr = document.getElementById('leaveStartDate').value;
+            const endDateStr = document.getElementById('leaveEndDate').value;
+            
+            if (startDateStr && endDateStr) {
+                const startDate = new Date(startDateStr);
+                const endDate = new Date(endDateStr);
+
+                if (endDate < startDate) {
+                    hoursNeededDisplay.textContent = 'Tarikh tidak sah';
+                    return;
+                }
+
+                let totalHours = 0;
+                let currentDate = new Date(startDate);
+                while (currentDate <= endDate) {
+                    const dayOfWeek = currentDate.getDay();
+                    if (dayOfWeek !== 5 && dayOfWeek !== 6) { // Bukan Jumaat atau Sabtu
+                        const hoursPerDay = (dayOfWeek === 4) ? 7.5 : 9; // Khamis = 7.5, selainnya 9
+                        totalHours += hoursPerDay;
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                hoursNeededDisplay.textContent = `${totalHours.toFixed(2)} Jam`;
             } else {
                 hoursNeededDisplay.textContent = '0 Jam';
             }
         }
-        document.getElementById('leaveDate').addEventListener('input', calculateRequiredHours);
-        document.getElementById('leaveDays').addEventListener('input', calculateRequiredHours);
+        document.getElementById('leaveStartDate').addEventListener('input', calculateRequiredHours);
+        document.getElementById('leaveEndDate').addEventListener('input', calculateRequiredHours);
 
         leaveForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -250,7 +268,11 @@
             submitButton.textContent = 'Memproses...';
             leaveStatusDiv.textContent = '';
 
-            const formData = { action: 'apply_leave', leaveDate: document.getElementById('leaveDate').value, leaveDays: document.getElementById('leaveDays').value };
+            const formData = {
+                action: 'apply_leave',
+                startDate: document.getElementById('leaveStartDate').value,
+                endDate: document.getElementById('leaveEndDate').value
+            };
 
             try {
                 const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
