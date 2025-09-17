@@ -17,9 +17,9 @@
         .form-section, .table-section { background-color: var(--card-bg); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         h2 { margin-top: 0; border-bottom: 2px solid var(--main-bg); padding-bottom: 0.5rem; }
         label { display: block; margin-top: 1rem; font-weight: 600; color: var(--text-light); }
-        input[type="date"], input[type="text"], input[type="time"], input[type="number"] { width: 100%; padding: 0.75rem; margin-top: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        .time-row { display: flex; gap: 1rem; }
-        .time-row > div { flex: 1; }
+        input { width: 100%; padding: 0.75rem; margin-top: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        .row { display: flex; gap: 1rem; }
+        .col { flex: 1; }
         button { width: 100%; padding: 0.8rem; margin-top: 1.5rem; border: none; border-radius: 6px; background-color: var(--primary-color); color: white; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
         button:hover:not(:disabled) { background-color: #2563eb; }
         button:disabled { background-color: #94a3b8; cursor: not-allowed; }
@@ -36,23 +36,21 @@
 <body>
     <div class="container">
         <header class="header"><h1>Sistem Pengurusan Cuti Gantian</h1></header>
-        
         <section class="stats-grid">
             <div class="stat-card"><h3>Baki Terkini</h3><p id="baki-terkini">Memuat...</p></div>
             <div class="stat-card"><h3>Jam Digunakan</h3><p id="jam-digunakan">Memuat...</p></div>
             <div class="stat-card"><h3>Jam Akan Luput</h3><p id="jam-akan-luput">Memuat...</p></div>
         </section>
-
         <main class="main-layout">
             <div class="form-container">
                 <section class="form-section">
                     <h2>Tambah Rekod OT</h2>
                     <form id="ot-form">
-                        <label for="tarikh">Tarikh Tugasan</label><input type="date" id="tarikh" required>
-                        <label for="tugasan">Nama Tugasan</label><input type="text" id="tugasan" required>
-                        <div class="time-row">
-                            <div><label for="jamMula">Masa Mula</label><input type="time" id="jamMula" required></div>
-                            <div><label for="jamTamat">Masa Tamat</label><input type="time" id="jamTamat" required></div>
+                         <label for="tarikh">Tarikh Tugasan</label><input type="date" id="tarikh" required>
+                         <label for="tugasan">Nama Tugasan</label><input type="text" id="tugasan" required>
+                        <div class="row">
+                            <div class="col"><label for="jamMula">Masa Mula</label><input type="time" id="jamMula" required></div>
+                            <div class="col"><label for="jamTamat">Masa Tamat</label><input type="time" id="jamTamat" required></div>
                         </div>
                         <label for="jumlahJamDisplay">Jumlah Jam & Minit</label><input type="text" id="jumlahJamDisplay" disabled style="font-weight: bold; background-color: #f8fafc;">
                         <button type="submit" id="submit-ot-button">Simpan Rekod</button>
@@ -92,8 +90,9 @@
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbw5rN4H00JByJfG0lX-S7UZbGocSPzAOYWW0QXUTvVmhP3PDDqcxziBbb17U0lECoHs/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwtqkZqe4gc6j08YMXkHgQTIIiQV10yfRTRFSGUExT_4aXb0uesul1HFjhPMnjd_E6M/exec'; // <-- TAMPAL URL BAHARU ANDA DI SINI
 
+        // --- DOM Elements ---
         const otForm = document.getElementById('ot-form');
         const leaveForm = document.getElementById('leave-form');
         const otStatusDiv = document.getElementById('ot-status');
@@ -106,6 +105,7 @@
         const hoursNeededDisplay = document.getElementById('hours-needed');
         let totalHoursDecimal = 0;
 
+        // --- Main Data Function ---
         async function fetchAllData() {
             recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
             leaveRecordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
@@ -138,9 +138,7 @@
             if (!data.ot_records || data.ot_records.length === 0) {
                 recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
             } else {
-                // --- PERUBAHAN DI SINI ---
-                // Susun rekod OT mengikut tarikh tugasan, dari yang paling lama ke yang paling baharu
-                data.ot_records.sort((a, b) => new Date(a.tarikh.split('/').reverse().join('-')) - new Date(b.tarikh.split('/').reverse().join('-'))).forEach(record => {
+                data.ot_records.forEach(record => {
                     const [day, month, year] = record.tarikhLuput.split('/');
                     const expiryDate = new Date(`${year}-${month}-${day}`);
                     
@@ -188,6 +186,7 @@
 
         document.addEventListener('DOMContentLoaded', fetchAllData);
 
+        // --- OT Form Logic ---
         function calculateDuration() {
             const startTime = document.getElementById('jamMula').value;
             const endTime = document.getElementById('jamTamat').value;
@@ -232,6 +231,7 @@
             }
         });
 
+        // --- LEAVE FORM LOGIC (BAHARU) ---
         function calculateRequiredHours() {
             const startDateStr = document.getElementById('leaveStartDate').value;
             const endDateStr = document.getElementById('leaveEndDate').value;
@@ -295,7 +295,6 @@
                 submitButton.textContent = 'Mohon Cuti';
             }
         });
-
     </script>
 </body>
 </html>
