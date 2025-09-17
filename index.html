@@ -91,7 +91,7 @@
 
     <script>
         // --- CONFIGURATION ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxZPagUpjkd4xsJ13zjuMbL8ynv8CtnS69EC8SC_Qd8NptdyDfLt5-UlCS71UbFOGU/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwLXc31p3D9oJkVjIhWNV2meEyw7eN7IkJgd83htRPt8eKjh1erfI_Jmkir21mgGWTC/exec';
 
         // --- DOM ELEMENTS ---
         const otStatusDiv = document.getElementById('ot-status');
@@ -122,6 +122,7 @@
                     } else {
                         result.data.ot_records.forEach(record => {
                             if (record.status === 'Tersedia') bakiJam += record.jumlahJam;
+                            // Kira jumlah jam digunakan dari rekod OT yang berstatus "Digunakan"
                             if (record.status === 'Digunakan') jamDigunakan += record.jumlahJam;
                             
                             const row = document.createElement('tr');
@@ -193,14 +194,14 @@
             };
             
             try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData), headers: {'Content-Type': 'application/json'} });
                 const result = await response.json();
                 if (result.status === 'success') {
                     otStatusDiv.textContent = 'Rekod berjaya disimpan!';
                     otStatusDiv.style.color = 'green';
                     this.reset();
                     document.getElementById('jumlahJam').value = "";
-                    await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for sheet to update
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for Google Sheet to update
                     await fetchAllData();
                 } else {
                     throw new Error(result.message);
@@ -242,14 +243,14 @@
             };
 
             try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData), headers: {'Content-Type': 'application/json'} });
                 const result = await response.json();
                 if (result.status === 'success') {
                     leaveStatusDiv.textContent = result.message;
                     leaveStatusDiv.style.color = 'green';
                     this.reset();
                     hoursNeededDisplay.textContent = '0 Jam';
-                    await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for sheet to update
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for Google Sheet to update
                     await fetchAllData();
                 } else {
                     throw new Error(result.message);
