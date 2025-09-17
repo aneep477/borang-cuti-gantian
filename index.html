@@ -91,7 +91,7 @@
 
     <script>
         // --- CONFIGURATION ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwdIwXh5w0GIlUNqScOBzkwtTDp9vxg7oi4IkwL8QJ17E3DcRqnliu6hSnGV3hnI65A/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwLXc31p3D9oJkVjIhWNV2meEyw7eN7IkJgd83htRPt8eKjh1erfI_Jmkir21mgGWTC/exec';
 
         // --- DOM ELEMENTS ---
         const otStatusDiv = document.getElementById('ot-status');
@@ -121,11 +121,8 @@
                         recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
                     } else {
                         result.data.ot_records.forEach(record => {
-                            if (record.status === 'Tersedia') {
-                                bakiJam += record.jumlahJam;
-                            } else if (record.status === 'Digunakan') {
-                                jamDigunakanTotal += record.jumlahJam;
-                            }
+                            if (record.status === 'Tersedia') bakiJam += record.jumlahJam;
+                            if (record.status === 'Digunakan') jamDigunakanTotal += record.jumlahJam;
                             
                             const row = document.createElement('tr');
                             row.innerHTML = `
@@ -197,7 +194,7 @@
             };
             
             try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData), headers: {'Content-Type': 'application/json'} });
                 const result = await response.json();
                 if (result.status === 'success') {
                     otStatusDiv.textContent = 'Rekod berjaya disimpan!';
@@ -246,7 +243,7 @@
             };
 
             try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData), headers: {'Content-Type': 'application/json'} });
                 const result = await response.json();
                 if (result.status === 'success') {
                     leaveStatusDiv.textContent = result.message;
