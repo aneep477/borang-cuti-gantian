@@ -90,7 +90,7 @@
     </div>
 
     <script>
-        const API_URL = 'URL_WEB_APP_ANDA_YANG_TERKINI';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxbes9QXnjlK1wElYnOXPd1-QmVYEjm1jprjo-imGdNCEuB7VwevPms5iPwqufbwho1/exec';
 
         const otForm = document.getElementById('ot-form');
         const leaveForm = document.getElementById('leave-form');
@@ -105,13 +105,13 @@
         let totalHoursDecimal = 0;
 
         async function fetchAllData() {
-            // Set UI to loading state
             recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
             leaveRecordsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuatkan data...</td></tr>';
             [bakiTerkiniDisplay, jamDigunakanDisplay, jamAkanLuputDisplay].forEach(el => el.textContent = 'Memuat...');
 
             try {
                 const response = await fetch(API_URL);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const result = await response.json();
 
                 if (result.status === "success") {
@@ -122,11 +122,11 @@
             } catch (error) {
                 console.error("Fetch Error:", error);
                 recordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Ralat: ${error.message}</td></tr>`;
+                leaveRecordsBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">-</td></tr>`;
             }
         }
 
         function updateDashboard(data) {
-            // Update OT Table and calculate stats
             recordsBody.innerHTML = '';
             let bakiJam = 0;
             let jamDigunakanTotal = 0;
@@ -139,9 +139,11 @@
                 recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
             } else {
                 data.ot_records.forEach(record => {
+                    const [day, month, year] = record.tarikhLuput.split('/');
+                    const expiryDate = new Date(`${year}-${month}-${day}`);
+                    
                     if (record.status === 'Tersedia') {
                         bakiJam += record.jumlahJam;
-                        const expiryDate = new Date(record.tarikhLuput.split('/').reverse().join('-'));
                         if (expiryDate <= thirtyDaysFromNow && expiryDate >= today) {
                             jamAkanLuput += record.jumlahJam;
                         }
@@ -164,7 +166,6 @@
             jamDigunakanDisplay.textContent = `${jamDigunakanTotal.toFixed(2)} Jam`;
             jamAkanLuputDisplay.textContent = `${jamAkanLuput.toFixed(2)} Jam`;
 
-            // Update Leave History Table
             leaveRecordsBody.innerHTML = '';
              if (!data.leave_records || data.leave_records.length === 0) {
                 leaveRecordsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tiada rekod cuti...</td></tr>';
@@ -197,8 +198,7 @@
                 document.getElementById('jumlahJamDisplay').value = `${hours} Jam ${minutes} Minit`;
             }
         }
-        document.getElementById('jamMula').addEventListener('change', calculateDuration);
-        document.getElementById('jamTamat').addEventListener('change', calculateDuration);
+        ['jamMula', 'jamTamat'].forEach(id => document.getElementById(id).addEventListener('change', calculateDuration));
 
         otForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -241,8 +241,7 @@
                 hoursNeededDisplay.textContent = '0 Jam';
             }
         }
-        document.getElementById('leaveDate').addEventListener('input', calculateRequiredHours);
-        document.getElementById('leaveDays').addEventListener('input', calculateRequiredHours);
+        ['leaveDate', 'leaveDays'].forEach(id => document.getElementById(id).addEventListener('input', calculateRequiredHours));
 
         leaveForm.addEventListener('submit', async function(e) {
             e.preventDefault();
