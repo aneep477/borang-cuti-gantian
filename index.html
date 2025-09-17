@@ -90,7 +90,7 @@
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwtqkZqe4gc6j08YMXkHgQTIIiQV10yfRTRFSGUExT_4aXb0uesul1HFjhPMnjd_E6M/exec'; // <-- TAMPAL URL BAHARU ANDA DI SINI
+        const API_URL = 'https://script.google.com/macros/s/AKfycbw1z_3MIMS3Lizfr_uOi937duGBW468uhUtxppUZBSJj2cYLGskWegzEz2fjq9I8sk/exec'; // <-- TAMPAL URL BAHARU ANDA DI SINI
 
         // --- DOM Elements ---
         const otForm = document.getElementById('ot-form');
@@ -138,7 +138,7 @@
             if (!data.ot_records || data.ot_records.length === 0) {
                 recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
             } else {
-                data.ot_records.forEach(record => {
+                data.ot_records.sort((a, b) => new Date(a.tarikh.split('/').reverse().join('-')) - new Date(b.tarikh.split('/').reverse().join('-'))).forEach(record => {
                     const [day, month, year] = record.tarikhLuput.split('/');
                     const expiryDate = new Date(`${year}-${month}-${day}`);
                     
@@ -295,6 +295,7 @@
                 submitButton.textContent = 'Mohon Cuti';
             }
         });
+
     </script>
 </body>
 </html>
