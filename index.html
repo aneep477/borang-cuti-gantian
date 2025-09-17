@@ -90,9 +90,8 @@
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbw1z_3MIMS3Lizfr_uOi937duGBW468uhUtxppUZBSJj2cYLGskWegzEz2fjq9I8sk/exec'; // <-- TAMPAL URL BAHARU ANDA DI SINI
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxdLFNpRYKGZt9n2fGLb5KEKJ33KFl7tx13pKOHpX812NA7dT9y1i_IcK84uetNNmew/exec'; // <-- TAMPAL URL BAHARU ANDA DI SINI
 
-        // --- DOM Elements ---
         const otForm = document.getElementById('ot-form');
         const leaveForm = document.getElementById('leave-form');
         const otStatusDiv = document.getElementById('ot-status');
@@ -105,7 +104,6 @@
         const hoursNeededDisplay = document.getElementById('hours-needed');
         let totalHoursDecimal = 0;
 
-        // --- Main Data Function ---
         async function fetchAllData() {
             recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
             leaveRecordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
@@ -138,7 +136,8 @@
             if (!data.ot_records || data.ot_records.length === 0) {
                 recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
             } else {
-                data.ot_records.sort((a, b) => new Date(a.tarikh.split('/').reverse().join('-')) - new Date(b.tarikh.split('/').reverse().join('-'))).forEach(record => {
+                // Isihan tidak lagi diperlukan di sini kerana Apps Script telah melakukannya
+                data.ot_records.forEach(record => {
                     const [day, month, year] = record.tarikhLuput.split('/');
                     const expiryDate = new Date(`${year}-${month}-${day}`);
                     
@@ -186,7 +185,6 @@
 
         document.addEventListener('DOMContentLoaded', fetchAllData);
 
-        // --- OT Form Logic ---
         function calculateDuration() {
             const startTime = document.getElementById('jamMula').value;
             const endTime = document.getElementById('jamTamat').value;
@@ -231,7 +229,6 @@
             }
         });
 
-        // --- LEAVE FORM LOGIC (BAHARU) ---
         function calculateRequiredHours() {
             const startDateStr = document.getElementById('leaveStartDate').value;
             const endDateStr = document.getElementById('leaveEndDate').value;
@@ -295,7 +292,6 @@
                 submitButton.textContent = 'Mohon Cuti';
             }
         });
-
     </script>
 </body>
 </html>
