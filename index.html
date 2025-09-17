@@ -138,6 +138,8 @@
             if (!data.ot_records || data.ot_records.length === 0) {
                 recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
             } else {
+                // --- PERUBAHAN DI SINI ---
+                // Susun rekod OT mengikut tarikh tugasan, dari yang paling lama ke yang paling baharu
                 data.ot_records.sort((a, b) => new Date(a.tarikh.split('/').reverse().join('-')) - new Date(b.tarikh.split('/').reverse().join('-'))).forEach(record => {
                     const [day, month, year] = record.tarikhLuput.split('/');
                     const expiryDate = new Date(`${year}-${month}-${day}`);
