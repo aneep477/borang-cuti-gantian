@@ -331,9 +331,9 @@
 
     <script>
         // Simulasi API URL (dalam aplikasi sebenar, ini akan menjadi URL sebenar)
-        const API_URL = 'https://script.google.com/macros/s/AKfycbyMQXAX9sm3qGDsgCbHYn7yr1wqnlL9QkPI9BzMYrV9btXkJAcMtchzYAQlfTzdPDoQ/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyMQXAX9sm3qGDsgCbHYn7yr1wqnlL9QkPI9BzMYrV9btXkJAcMtchzYAQlfTzdPDoQ/exec  ';
         
-        // Data contoh untuk simulasi (akan digantikan dengan data dari API)
+        // Data kosong (data contoh telah dibuang)
         let otRecords = [];
         let leaveRecords = [];
         
@@ -368,22 +368,14 @@
             }
         }
 
-        // Fungsi simulasi API (akan digantikan dengan panggilan API sebenar)
+        // Fungsi simulasi API (tanpa data contoh)
         async function simulateAPICall() {
             // Simulasi kelewatan rangkaian
             await new Promise(resolve => setTimeout(resolve, 500));
             
-            // Data contoh (dalam aplikasi sebenar, data ini akan datang dari API)
-            otRecords = [
-                { id: 1, tarikh: '15/03/2023', tugasan: 'Projek Sistem', jamMula: '17:00', jamTamat: '20:30', jumlahJam: 3.5, tarikhLuput: '15/09/2023', status: 'Tersedia' },
-                { id: 2, tarikh: '22/03/2023', tugasan: 'Laporan Bulanan', jamMula: '18:00', jamTamat: '21:00', jumlahJam: 3.0, tarikhLuput: '22/09/2023', status: 'Tersedia' },
-                { id: 3, tarikh: '05/04/2023', tugasan: 'Mesyuarat Khas', jamMula: '19:00', jamTamat: '22:15', jumlahJam: 3.25, tarikhLuput: '05/10/2023', status: 'Digunakan' },
-                { id: 4, tarikh: '10/05/2023', tugasan: 'Latihan Kakitangan', jamMula: '16:30', jamTamat: '19:45', jumlahJam: 3.25, tarikhLuput: '10/11/2023', status: 'Tersedia' }
-            ];
-            
-            leaveRecords = [
-                { tarikhMohon: '10/04/2023', tarikhMula: '12/04/2023', tarikhTamat: '14/04/2023', bilanganHari: 3, jumlahJam: 25.5 }
-            ];
+            // Data kosong (data contoh telah dibuang)
+            otRecords = [];
+            leaveRecords = [];
             
             return { status: "success", data: { ot_records: otRecords, leave_records: leaveRecords } };
         }
@@ -510,10 +502,33 @@
             }
         }
 
+        // Fungsi untuk menukar format tarikh untuk input date
+        function formatDateForInput(dateStr) {
+            if (!dateStr) return '';
+            const [day, month, year] = dateStr.split('/');
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+
+        // Fungsi untuk memformat tarikh ke DD/MM/YYYY
+        function formatDate(date) {
+            const d = new Date(date);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
         // Fungsi untuk mengedit rekod
         function editRecord(recordId) {
             const record = otRecords.find(r => r.id === recordId);
-            if (!record) return;
+            if (!record) {
+                otStatusDiv.textContent = 'Rekod tidak ditemui!';
+                otStatusDiv.style.color = 'red';
+                setTimeout(() => {
+                    otStatusDiv.textContent = '';
+                }, 3000);
+                return;
+            }
             
             // Jika sedang mengedit rekod lain, batalkan dulu
             if (editingRecordId !== null && editingRecordId !== recordId) {
@@ -534,7 +549,14 @@
                 }
             }
             
-            if (!targetRow) return;
+            if (!targetRow) {
+                otStatusDiv.textContent = 'Baris tidak ditemui!';
+                otStatusDiv.style.color = 'red';
+                setTimeout(() => {
+                    otStatusDiv.textContent = '';
+                }, 3000);
+                return;
+            }
             
             // Buat form edit
             const editForm = document.createElement('tr');
@@ -620,7 +642,14 @@
         // Fungsi untuk menyimpan perubahan rekod
         function saveEditedRecord(recordId) {
             const recordIndex = otRecords.findIndex(r => r.id === recordId);
-            if (recordIndex === -1) return;
+            if (recordIndex === -1) {
+                otStatusDiv.textContent = 'Rekod tidak ditemui!';
+                otStatusDiv.style.color = 'red';
+                setTimeout(() => {
+                    otStatusDiv.textContent = '';
+                }, 3000);
+                return;
+            }
             
             const tarikh = document.getElementById('edit-tarikh').value;
             const tugasan = document.getElementById('edit-tugasan').value;
@@ -670,13 +699,15 @@
             // Tunjukkan semula semua baris yang disembunyikan
             const rows = document.querySelectorAll('#ot-records-body tr');
             rows.forEach(row => {
-                row.style.display = '';
+                if (row.style.display === 'none') {
+                    row.style.display = '';
+                }
             });
             
             editingRecordId = null;
         }
 
-        // Fungsi untuk memadam rekod (DIPERBAIKI)
+        // Fungsi untuk memadam rekod
         function deleteRecord(recordId) {
             if (confirm('Adakah anda pasti ingin memadam rekod ini?')) {
                 // Cari indeks rekod yang hendak dipadam
@@ -703,21 +734,6 @@
                     }, 3000);
                 }
             }
-        }
-
-        // Fungsi untuk menukar format tarikh untuk input date
-        function formatDateForInput(dateStr) {
-            const [day, month, year] = dateStr.split('/');
-            return `${year}-${month}-${day}`;
-        }
-
-        // Fungsi untuk memformat tarikh ke DD/MM/YYYY
-        function formatDate(date) {
-            const d = new Date(date);
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            return `${day}/${month}/${year}`;
         }
 
         // Event listeners
@@ -750,111 +766,4 @@
                     tugasan,
                     jamMula,
                     jamTamat,
-                    jumlahJam: totalHoursDecimal,
-                    tarikhLuput,
-                    status: 'Tersedia'
-                };
-                
-                otRecords.push(newRecord);
-                
-                // Reset form
-                this.reset();
-                document.getElementById('jumlahJamDisplay').value = '';
-                
-                // Kemaskini paparan
-                updateDashboard();
-                
-                // Tunjukkan mesej kejayaan
-                otStatusDiv.textContent = 'Rekod berjaya disimpan!';
-                otStatusDiv.style.color = 'green';
-                setTimeout(() => {
-                    otStatusDiv.textContent = '';
-                }, 3000);
-            });
-            
-            // Event listener untuk form cuti
-            leaveForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const startDate = document.getElementById('leaveStartDate').value;
-                const endDate = document.getElementById('leaveEndDate').value;
-                
-                // Kira bilangan hari bekerja
-                let workingDays = 0;
-                let currentDate = new Date(startDate);
-                const end = new Date(endDate);
-                
-                while (currentDate <= end) {
-                    const dayOfWeek = currentDate.getDay();
-                    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Bukan Ahad atau Sabtu
-                        workingDays++;
-                    }
-                    currentDate.setDate(currentDate.getDate() + 1);
-                }
-                
-                // Kira jumlah jam (8 jam sehari)
-                const totalHours = workingDays * 8;
-                
-                // Tambah rekod cuti baru
-                const newLeaveRecord = {
-                    tarikhMohon: formatDate(new Date()),
-                    tarikhMula: formatDate(new Date(startDate)),
-                    tarikhTamat: formatDate(new Date(endDate)),
-                    bilanganHari: workingDays,
-                    jumlahJam: totalHours
-                };
-                
-                leaveRecords.push(newLeaveRecord);
-                
-                // Reset form
-                this.reset();
-                hoursNeededDisplay.textContent = '0 Jam';
-                
-                // Kemaskini paparan
-                updateDashboard();
-                
-                // Tunjukkan mesej kejayaan
-                leaveStatusDiv.textContent = 'Cuti berjaya dimohon!';
-                leaveStatusDiv.style.color = 'green';
-                setTimeout(() => {
-                    leaveStatusDiv.textContent = '';
-                }, 3000);
-            });
-            
-            // Event listeners untuk mengira jam cuti yang diperlukan
-            document.getElementById('leaveStartDate').addEventListener('input', calculateRequiredHours);
-            document.getElementById('leaveEndDate').addEventListener('input', calculateRequiredHours);
-        });
-
-        // Fungsi untuk mengira jam cuti yang diperlukan
-        function calculateRequiredHours() {
-            const startDateStr = document.getElementById('leaveStartDate').value;
-            const endDateStr = document.getElementById('leaveEndDate').value;
-            
-            if (startDateStr && endDateStr) {
-                const startDate = new Date(startDateStr);
-                const endDate = new Date(endDateStr);
-
-                if (endDate < startDate) {
-                    hoursNeededDisplay.textContent = 'Tarikh tidak sah';
-                    return;
-                }
-
-                let totalHours = 0;
-                let currentDate = new Date(startDate);
-                while (currentDate <= endDate) {
-                    const dayOfWeek = currentDate.getDay();
-                    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Bukan Ahad atau Sabtu
-                        const hoursPerDay = (dayOfWeek === 4) ? 7.5 : 8; // Khamis = 7.5, selainnya 8
-                        totalHours += hoursPerDay;
-                    }
-                    currentDate.setDate(currentDate.getDate() + 1);
-                }
-                hoursNeededDisplay.textContent = `${totalHours.toFixed(2)} Jam`;
-            } else {
-                hoursNeededDisplay.textContent = '0 Jam';
-            }
-        }
-    </script>
-</body>
-</html>
+                    jumlah
