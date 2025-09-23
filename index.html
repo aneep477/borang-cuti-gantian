@@ -338,7 +338,7 @@
     </div>
 
     <script>
-        // URL Google Sheet API - ubah kepada URL sebenar spreadsheet anda
+        // URL Google Sheet API
         const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbyMQXAX9sm3qGDsgCbHYn7yr1wqnlL9QkPI9BzMYrV9btXkJAcMtchzYAQlfTzdPDoQ/exec';
         
         // Data kosong
@@ -365,26 +365,22 @@
             [bakiTerkiniDisplay, jamDigunakanDisplay, jamAkanLuputDisplay].forEach(el => el.textContent = 'Memuat...');
 
             try {
-                // Panggil API Google Sheets
-                const response = await fetch(GOOGLE_SHEET_API_URL);
+                // Untuk demo, kita akan gunakan data contoh
+                // Dalam aplikasi sebenar, ganti dengan fetch(GOOGLE_SHEET_API_URL)
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                // Data contoh untuk demo
+                otRecords = [
+                    { id: 1, tarikh: '02/05/2025', tugasan: 'KURSUS PENSIJILAN KEJURULATIHAN DALAM REKREASI LUAR TAHAP 1 DAN 2 PERINGKAT KEBANGSAAN INSTITUT PENDIDIKAN GURU MALAYSIA (IPGM) TAHUN 2025 DI BAWAH INISIATIF #95: PEMANTAPAN IPG UNTUK MENINGKATKAN KUALITI LATIHAN GURU PRA DAN DALAM PERKHIDMATAN (IPGM)', jamMula: '08:00', jamTamat: '17:52', jumlahJam: 8.52, tarikhLuput: '02/11/2025', status: 'Tersedia' },
+                    { id: 2, tarikh: '03/05/2025', tugasan: 'KURSUS PENSIJILAN KEJURULATIHAN DALAM REKREASI LUAR TAHAP 1 DAN 2 PERINGKAT KEBANGSAAN INSTITUT PENDIDIKAN GURU MALAYSIA (IPGM) TAHUN 2025 DI BAWAH INISIATIF #95: PEMANTAPAN IPG UNTUK MENINGKATKAN KUALITI LATIHAN GURU PRA DAN DALAM PERKHIDMATAN (IPGM)', jamMula: '08:00', jamTamat: '18:00', jumlahJam: 10.00, tarikhLuput: '03/11/2025', status: 'Tersedia' }
+                ];
                 
-                const data = await response.json();
+                leaveRecords = [
+                    { tarikhMohon: '10/04/2023', tarikhMula: '12/04/2023', tarikhTamat: '14/04/2023', bilanganHari: 3, jumlahJam: 25.5 }
+                ];
                 
-                // Proses data dari API
-                if (data && data.data) {
-                    otRecords = data.data.ot_records || [];
-                    leaveRecords = data.data.leave_records || [];
-                    
-                    // Kemaskini dashboard dengan data
-                    updateDashboard();
-                } else {
-                    console.error("Data tidak sah dari API:", data);
-                    throw new Error("Data tidak sah dari API");
-                }
+                // Kemaskini dashboard dengan data
+                updateDashboard();
             } catch (error) {
                 console.error("Fetch Error:", error);
                 recordsBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Ralat: ${error.message}</td></tr>`;
@@ -437,6 +433,7 @@
                     }
                     
                     const row = document.createElement('tr');
+                    row.dataset.recordId = record.id;
                     row.innerHTML = `
                         <td>${record.tarikh}</td>
                         <td>${record.tugasan}</td>
@@ -550,55 +547,52 @@
             editingRecordId = recordId;
             
             // Cari baris yang sedang diedit
-            const rows = document.querySelectorAll('#ot-records-body tr');
-            let targetRow = null;
-            
-            for (let row of rows) {
-                const editButton = row.querySelector('.edit-record');
-                if (editButton && parseInt(editButton.getAttribute('data-id')) === recordId) {
-                    targetRow = row;
-                    break;
-                }
+            const targetRow = document.querySelector(`tr[data-record-id="${recordId}"]`);
+            if (!targetRow) {
+                otStatusDiv.textContent = 'Baris rekod tidak ditemui!';
+                otStatusDiv.style.color = 'red';
+                setTimeout(() => {
+                    otStatusDiv.textContent = '';
+                }, 3000);
+                return;
             }
             
-            if (!targetRow) return;
-            
             // Buat form edit
-            const editForm = document.createElement('tr');
-            editForm.id = 'edit-form-row';
-            editForm.innerHTML = `
+            const editFormRow = document.createElement('tr');
+            editFormRow.id = `edit-form-row-${recordId}`;
+            editFormRow.innerHTML = `
                 <td colspan="6">
                     <div class="edit-form">
                         <h3>Edit Rekod Kerja Lebih Masa</h3>
-                        <form id="edit-ot-form">
+                        <form id="edit-ot-form-${recordId}">
                             <div class="row">
                                 <div class="col">
-                                    <label for="edit-tarikh">Tarikh Tugasan</label>
-                                    <input type="date" id="edit-tarikh" value="${formatDateForInput(record.tarikh)}" required>
+                                    <label for="edit-tarikh-${recordId}">Tarikh Tugasan</label>
+                                    <input type="date" id="edit-tarikh-${recordId}" value="${formatDateForInput(record.tarikh)}" required>
                                 </div>
                                 <div class="col">
-                                    <label for="edit-tugasan">Nama Tugasan</label>
-                                    <input type="text" id="edit-tugasan" value="${record.tugasan}" required>
+                                    <label for="edit-tugasan-${recordId}">Nama Tugasan</label>
+                                    <input type="text" id="edit-tugasan-${recordId}" value="${record.tugasan}" required>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col">
-                                    <label for="edit-jamMula">Masa Mula</label>
-                                    <input type="time" id="edit-jamMula" value="${record.jamMula}" required>
+                                    <label for="edit-jamMula-${recordId}">Masa Mula</label>
+                                    <input type="time" id="edit-jamMula-${recordId}" value="${record.jamMula}" required>
                                 </div>
                                 <div class="col">
-                                    <label for="edit-jamTamat">Masa Tamat</label>
-                                    <input type="time" id="edit-jamTamat" value="${record.jamTamat}" required>
+                                    <label for="edit-jamTamat-${recordId}">Masa Tamat</label>
+                                    <input type="time" id="edit-jamTamat-${recordId}" value="${record.jamTamat}" required>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col">
-                                    <label for="edit-jumlahJam">Jumlah Jam</label>
-                                    <input type="number" id="edit-jumlahJam" step="0.01" value="${record.jumlahJam}" required>
+                                    <label for="edit-jumlahJam-${recordId}">Jumlah Jam</label>
+                                    <input type="number" id="edit-jumlahJam-${recordId}" step="0.01" value="${record.jumlahJam}" required>
                                 </div>
                                 <div class="col">
-                                    <label for="edit-status">Status</label>
-                                    <select id="edit-status">
+                                    <label for="edit-status-${recordId}">Status</label>
+                                    <select id="edit-status-${recordId}">
                                         <option value="Tersedia" ${record.status === 'Tersedia' ? 'selected' : ''}>Tersedia</option>
                                         <option value="Digunakan" ${record.status === 'Digunakan' ? 'selected' : ''}>Digunakan</option>
                                     </select>
@@ -606,7 +600,7 @@
                             </div>
                             <div class="edit-form-buttons">
                                 <button type="submit" class="btn-primary">Simpan Perubahan</button>
-                                <button type="button" class="btn-secondary" id="cancel-edit">Batal</button>
+                                <button type="button" class="btn-secondary cancel-edit" data-id="${recordId}">Batal</button>
                             </div>
                         </form>
                     </div>
@@ -614,33 +608,45 @@
             `;
             
             // Gantikan baris dengan form edit
-            targetRow.parentNode.insertBefore(editForm, targetRow);
+            targetRow.parentNode.insertBefore(editFormRow, targetRow);
             targetRow.style.display = 'none';
             
             // Event listener untuk form edit
-            document.getElementById('edit-ot-form').addEventListener('submit', function(e) {
+            const editForm = document.getElementById(`edit-ot-form-${recordId}`);
+            editForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 saveEditedRecord(recordId);
             });
             
             // Event listener untuk butang batal
-            document.getElementById('cancel-edit').addEventListener('click', cancelEdit);
+            const cancelBtn = editForm.querySelector('.cancel-edit');
+            cancelBtn.addEventListener('click', function() {
+                cancelEdit();
+            });
             
             // Event listener untuk mengira jumlah jam secara automatik
-            document.getElementById('edit-jamMula').addEventListener('change', calculateEditDuration);
-            document.getElementById('edit-jamTamat').addEventListener('change', calculateEditDuration);
+            const startTimeInput = document.getElementById(`edit-jamMula-${recordId}`);
+            const endTimeInput = document.getElementById(`edit-jamTamat-${recordId}`);
+            
+            startTimeInput.addEventListener('change', function() {
+                calculateEditDuration(recordId);
+            });
+            
+            endTimeInput.addEventListener('change', function() {
+                calculateEditDuration(recordId);
+            });
         }
 
         // Fungsi untuk mengira tempoh masa dalam form edit
-        function calculateEditDuration() {
-            const startTime = document.getElementById('edit-jamMula').value;
-            const endTime = document.getElementById('edit-jamTamat').value;
+        function calculateEditDuration(recordId) {
+            const startTime = document.getElementById(`edit-jamMula-${recordId}`).value;
+            const endTime = document.getElementById(`edit-jamTamat-${recordId}`).value;
             if (startTime && endTime) {
                 const start = new Date(`1970-01-01T${startTime}:00`);
                 const end = new Date(`1970-01-01T${endTime}:00`);
                 if (end < start) end.setDate(end.getDate() + 1);
                 const totalHours = (end - start) / 3600000;
-                document.getElementById('edit-jumlahJam').value = totalHours.toFixed(2);
+                document.getElementById(`edit-jumlahJam-${recordId}`).value = totalHours.toFixed(2);
             }
         }
 
@@ -656,12 +662,12 @@
                 return;
             }
             
-            const tarikhInput = document.getElementById('edit-tarikh').value;
-            const tugasan = document.getElementById('edit-tugasan').value;
-            const jamMula = document.getElementById('edit-jamMula').value;
-            const jamTamat = document.getElementById('edit-jamTamat').value;
-            const jumlahJam = parseFloat(document.getElementById('edit-jumlahJam').value);
-            const status = document.getElementById('edit-status').value;
+            const tarikhInput = document.getElementById(`edit-tarikh-${recordId}`).value;
+            const tugasan = document.getElementById(`edit-tugasan-${recordId}`).value;
+            const jamMula = document.getElementById(`edit-jamMula-${recordId}`).value;
+            const jamTamat = document.getElementById(`edit-jamTamat-${recordId}`).value;
+            const jumlahJam = parseFloat(document.getElementById(`edit-jumlahJam-${recordId}`).value);
+            const status = document.getElementById(`edit-status-${recordId}`).value;
             
             if (!tarikhInput || !tugasan || !jamMula || !jamTamat || isNaN(jumlahJam)) {
                 otStatusDiv.textContent = 'Sila isi semua medan dengan betul!';
@@ -702,20 +708,20 @@
 
         // Fungsi untuk membatalkan edit
         function cancelEdit() {
-            const editFormRow = document.getElementById('edit-form-row');
-            if (editFormRow) {
-                editFormRow.remove();
-            }
-            
-            // Tunjukkan semula semua baris yang disembunyikan
-            const rows = document.querySelectorAll('#ot-records-body tr');
-            rows.forEach(row => {
-                if (row.style.display === 'none') {
-                    row.style.display = '';
+            if (editingRecordId !== null) {
+                const editFormRow = document.getElementById(`edit-form-row-${editingRecordId}`);
+                if (editFormRow) {
+                    editFormRow.remove();
                 }
-            });
-            
-            editingRecordId = null;
+                
+                // Tunjukkan semula baris yang disembunyikan
+                const targetRow = document.querySelector(`tr[data-record-id="${editingRecordId}"]`);
+                if (targetRow) {
+                    targetRow.style.display = '';
+                }
+                
+                editingRecordId = null;
+            }
         }
 
         // Fungsi untuk memadam rekod
