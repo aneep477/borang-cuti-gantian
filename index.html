@@ -341,7 +341,7 @@
         // URL Google Sheet API
         const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbyMQXAX9sm3qGDsgCbHYn7yr1wqnlL9QkPI9BzMYrV9btXkJAcMtchzYAQlfTzdPDoQ/exec';
         
-        // Data kosong
+        // Data kosong (tanpa data demo)
         let otRecords = [];
         let leaveRecords = [];
         
@@ -365,26 +365,148 @@
             [bakiTerkiniDisplay, jamDigunakanDisplay, jamAkanLuputDisplay].forEach(el => el.textContent = 'Memuat...');
 
             try {
-                // Untuk demo, kita akan gunakan data contoh
-                // Dalam aplikasi sebenar, ganti dengan fetch(GOOGLE_SHEET_API_URL)
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Panggil API Google Sheets untuk mendapatkan data
+                const response = await fetch(GOOGLE_SHEET_API_URL + '?action=getData');
                 
-                // Data contoh untuk demo
-                otRecords = [
-                    { id: 1, tarikh: '02/05/2025', tugasan: 'KURSUS PENSIJILAN KEJURULATIHAN DALAM REKREASI LUAR TAHAP 1 DAN 2 PERINGKAT KEBANGSAAN INSTITUT PENDIDIKAN GURU MALAYSIA (IPGM) TAHUN 2025 DI BAWAH INISIATIF #95: PEMANTAPAN IPG UNTUK MENINGKATKAN KUALITI LATIHAN GURU PRA DAN DALAM PERKHIDMATAN (IPGM)', jamMula: '08:00', jamTamat: '17:52', jumlahJam: 8.52, tarikhLuput: '02/11/2025', status: 'Tersedia' },
-                    { id: 2, tarikh: '03/05/2025', tugasan: 'KURSUS PENSIJILAN KEJURULATIHAN DALAM REKREASI LUAR TAHAP 1 DAN 2 PERINGKAT KEBANGSAAN INSTITUT PENDIDIKAN GURU MALAYSIA (IPGM) TAHUN 2025 DI BAWAH INISIATIF #95: PEMANTAPAN IPG UNTUK MENINGKATKAN KUALITI LATIHAN GURU PRA DAN DALAM PERKHIDMATAN (IPGM)', jamMula: '08:00', jamTamat: '18:00', jumlahJam: 10.00, tarikhLuput: '03/11/2025', status: 'Tersedia' }
-                ];
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 
-                leaveRecords = [
-                    { tarikhMohon: '10/04/2023', tarikhMula: '12/04/2023', tarikhTamat: '14/04/2023', bilanganHari: 3, jumlahJam: 25.5 }
-                ];
+                const data = await response.json();
                 
-                // Kemaskini dashboard dengan data
-                updateDashboard();
+                // Proses data dari API
+                if (data && data.status === "success") {
+                    otRecords = data.ot_records || [];
+                    leaveRecords = data.leave_records || [];
+                    
+                    // Kemaskini dashboard dengan data
+                    updateDashboard();
+                } else {
+                    console.error("Data tidak sah dari API:", data);
+                    throw new Error("Data tidak sah dari API");
+                }
             } catch (error) {
                 console.error("Fetch Error:", error);
                 recordsBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Ralat: ${error.message}</td></tr>`;
                 leaveRecordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Ralat: ${error.message}</td></tr>`;
+                
+                // Tetapkan data kosong jika ada ralat
+                otRecords = [];
+                leaveRecords = [];
+                updateDashboard();
+            }
+        }
+
+        // Fungsi untuk menyimpan rekod OT ke Google Sheets
+        async function saveOTRecordToSheet(record) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'addOTRecord');
+                formData.append('tarikh', record.tarikh);
+                formData.append('tugasan', record.tugasan);
+                formData.append('jamMula', record.jamMula);
+                formData.append('jamTamat', record.jamTamat);
+                formData.append('jumlahJam', record.jumlahJam);
+                formData.append('tarikhLuput', record.tarikhLuput);
+                formData.append('status', record.status);
+                
+                const response = await fetch(GOOGLE_SHEET_API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error("Error saving OT record:", error);
+                throw error;
+            }
+        }
+
+        // Fungsi untuk mengemas kini rekod OT di Google Sheets
+        async function updateOTRecordInSheet(record) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'updateOTRecord');
+                formData.append('id', record.id);
+                formData.append('tarikh', record.tarikh);
+                formData.append('tugasan', record.tugasan);
+                formData.append('jamMula', record.jamMula);
+                formData.append('jamTamat', record.jamTamat);
+                formData.append('jumlahJam', record.jumlahJam);
+                formData.append('tarikhLuput', record.tarikhLuput);
+                formData.append('status', record.status);
+                
+                const response = await fetch(GOOGLE_SHEET_API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error("Error updating OT record:", error);
+                throw error;
+            }
+        }
+
+        // Fungsi untuk memadam rekod OT dari Google Sheets
+        async function deleteOTRecordFromSheet(recordId) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'deleteOTRecord');
+                formData.append('id', recordId);
+                
+                const response = await fetch(GOOGLE_SHEET_API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error("Error deleting OT record:", error);
+                throw error;
+            }
+        }
+
+        // Fungsi untuk menyimpan rekod cuti ke Google Sheets
+        async function saveLeaveRecordToSheet(record) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'addLeaveRecord');
+                formData.append('tarikhMohon', record.tarikhMohon);
+                formData.append('tarikhMula', record.tarikhMula);
+                formData.append('tarikhTamat', record.tarikhTamat);
+                formData.append('bilanganHari', record.bilanganHari);
+                formData.append('jumlahJam', record.jumlahJam);
+                
+                const response = await fetch(GOOGLE_SHEET_API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error("Error saving leave record:", error);
+                throw error;
             }
         }
 
@@ -651,7 +773,7 @@
         }
 
         // Fungsi untuk menyimpan perubahan rekod
-        function saveEditedRecord(recordId) {
+        async function saveEditedRecord(recordId) {
             const recordIndex = otRecords.findIndex(r => r.id === recordId);
             if (recordIndex === -1) {
                 otStatusDiv.textContent = 'Rekod tidak ditemui!';
@@ -681,7 +803,7 @@
             const tarikhLuput = formatDate(tarikhTugasan);
             
             // Kemaskini rekod
-            otRecords[recordIndex] = {
+            const updatedRecord = {
                 ...otRecords[recordIndex],
                 tarikh: formatDate(new Date(tarikhInput)),
                 tugasan,
@@ -692,18 +814,37 @@
                 status
             };
             
-            // Keluar dari mod edit
-            cancelEdit();
-            
-            // Kemaskini paparan
-            updateDashboard();
-            
-            // Tunjukkan mesej kejayaan
-            otStatusDiv.textContent = 'Rekod berjaya dikemaskini!';
-            otStatusDiv.style.color = 'green';
-            setTimeout(() => {
-                otStatusDiv.textContent = '';
-            }, 3000);
+            try {
+                // Simpan ke Google Sheets
+                const result = await updateOTRecordInSheet(updatedRecord);
+                
+                if (result.status === "success") {
+                    // Kemaskini rekod dalam array
+                    otRecords[recordIndex] = updatedRecord;
+                    
+                    // Keluar dari mod edit
+                    cancelEdit();
+                    
+                    // Kemaskini paparan
+                    updateDashboard();
+                    
+                    // Tunjukkan mesej kejayaan
+                    otStatusDiv.textContent = 'Rekod berjaya dikemaskini!';
+                    otStatusDiv.style.color = 'green';
+                    setTimeout(() => {
+                        otStatusDiv.textContent = '';
+                    }, 3000);
+                } else {
+                    throw new Error(result.message || "Gagal mengemaskini rekod");
+                }
+            } catch (error) {
+                console.error("Error updating record:", error);
+                otStatusDiv.textContent = 'Gagal mengemaskini rekod: ' + error.message;
+                otStatusDiv.style.color = 'red';
+                setTimeout(() => {
+                    otStatusDiv.textContent = '';
+                }, 5000);
+            }
         }
 
         // Fungsi untuk membatalkan edit
@@ -725,24 +866,40 @@
         }
 
         // Fungsi untuk memadam rekod
-        function deleteRecord(recordId) {
+        async function deleteRecord(recordId) {
             if (confirm('Adakah anda pasti ingin memadam rekod ini?')) {
                 // Cari indeks rekod yang hendak dipadam
                 const recordIndex = otRecords.findIndex(r => r.id === recordId);
                 
                 if (recordIndex !== -1) {
-                    // Padam rekod dari array
-                    otRecords.splice(recordIndex, 1);
-                    
-                    // Kemaskini paparan
-                    updateDashboard();
-                    
-                    // Tunjukkan mesej kejayaan
-                    otStatusDiv.textContent = 'Rekod berjaya dipadam!';
-                    otStatusDiv.style.color = 'green';
-                    setTimeout(() => {
-                        otStatusDiv.textContent = '';
-                    }, 3000);
+                    try {
+                        // Padam dari Google Sheets
+                        const result = await deleteOTRecordFromSheet(recordId);
+                        
+                        if (result.status === "success") {
+                            // Padam rekod dari array
+                            otRecords.splice(recordIndex, 1);
+                            
+                            // Kemaskini paparan
+                            updateDashboard();
+                            
+                            // Tunjukkan mesej kejayaan
+                            otStatusDiv.textContent = 'Rekod berjaya dipadam!';
+                            otStatusDiv.style.color = 'green';
+                            setTimeout(() => {
+                                otStatusDiv.textContent = '';
+                            }, 3000);
+                        } else {
+                            throw new Error(result.message || "Gagal memadam rekod");
+                        }
+                    } catch (error) {
+                        console.error("Error deleting record:", error);
+                        otStatusDiv.textContent = 'Gagal memadam rekod: ' + error.message;
+                        otStatusDiv.style.color = 'red';
+                        setTimeout(() => {
+                            otStatusDiv.textContent = '';
+                        }, 5000);
+                    }
                 } else {
                     otStatusDiv.textContent = 'Rekod tidak ditemui!';
                     otStatusDiv.style.color = 'red';
@@ -763,7 +920,7 @@
             });
             
             // Event listener untuk form OT
-            otForm.addEventListener('submit', function(e) {
+            otForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const tarikh = document.getElementById('tarikh').value;
@@ -794,25 +951,42 @@
                     status: 'Tersedia'
                 };
                 
-                otRecords.push(newRecord);
-                
-                // Reset form
-                this.reset();
-                document.getElementById('jumlahJamDisplay').value = '';
-                
-                // Kemaskini paparan
-                updateDashboard();
-                
-                // Tunjukkan mesej kejayaan
-                otStatusDiv.textContent = 'Rekod berjaya disimpan!';
-                otStatusDiv.style.color = 'green';
-                setTimeout(() => {
-                    otStatusDiv.textContent = '';
-                }, 3000);
+                try {
+                    // Simpan ke Google Sheets
+                    const result = await saveOTRecordToSheet(newRecord);
+                    
+                    if (result.status === "success") {
+                        // Tambah rekod ke array
+                        otRecords.push(newRecord);
+                        
+                        // Reset form
+                        this.reset();
+                        document.getElementById('jumlahJamDisplay').value = '';
+                        
+                        // Kemaskini paparan
+                        updateDashboard();
+                        
+                        // Tunjukkan mesej kejayaan
+                        otStatusDiv.textContent = 'Rekod berjaya disimpan!';
+                        otStatusDiv.style.color = 'green';
+                        setTimeout(() => {
+                            otStatusDiv.textContent = '';
+                        }, 3000);
+                    } else {
+                        throw new Error(result.message || "Gagal menyimpan rekod");
+                    }
+                } catch (error) {
+                    console.error("Error saving record:", error);
+                    otStatusDiv.textContent = 'Gagal menyimpan rekod: ' + error.message;
+                    otStatusDiv.style.color = 'red';
+                    setTimeout(() => {
+                        otStatusDiv.textContent = '';
+                    }, 5000);
+                }
             });
             
             // Event listener untuk form cuti
-            leaveForm.addEventListener('submit', function(e) {
+            leaveForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const startDate = document.getElementById('leaveStartDate').value;
@@ -858,21 +1032,38 @@
                     jumlahJam: totalHours
                 };
                 
-                leaveRecords.push(newLeaveRecord);
-                
-                // Reset form
-                this.reset();
-                hoursNeededDisplay.textContent = '0 Jam';
-                
-                // Kemaskini paparan
-                updateDashboard();
-                
-                // Tunjukkan mesej kejayaan
-                leaveStatusDiv.textContent = 'Cuti berjaya dimohon!';
-                leaveStatusDiv.style.color = 'green';
-                setTimeout(() => {
-                    leaveStatusDiv.textContent = '';
-                }, 3000);
+                try {
+                    // Simpan ke Google Sheets
+                    const result = await saveLeaveRecordToSheet(newLeaveRecord);
+                    
+                    if (result.status === "success") {
+                        // Tambah rekod ke array
+                        leaveRecords.push(newLeaveRecord);
+                        
+                        // Reset form
+                        this.reset();
+                        hoursNeededDisplay.textContent = '0 Jam';
+                        
+                        // Kemaskini paparan
+                        updateDashboard();
+                        
+                        // Tunjukkan mesej kejayaan
+                        leaveStatusDiv.textContent = 'Cuti berjaya dimohon!';
+                        leaveStatusDiv.style.color = 'green';
+                        setTimeout(() => {
+                            leaveStatusDiv.textContent = '';
+                        }, 3000);
+                    } else {
+                        throw new Error(result.message || "Gagal menyimpan rekod cuti");
+                    }
+                } catch (error) {
+                    console.error("Error saving leave record:", error);
+                    leaveStatusDiv.textContent = 'Gagal menyimpan rekod cuti: ' + error.message;
+                    leaveStatusDiv.style.color = 'red';
+                    setTimeout(() => {
+                        leaveStatusDiv.textContent = '';
+                    }, 5000);
+                }
             });
             
             // Event listeners untuk mengira jam cuti yang diperlukan
