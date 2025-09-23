@@ -202,9 +202,6 @@
         .edit-form-buttons button { 
             flex: 1; 
         }
-        .sort-indicator { 
-            margin-left: 5px; 
-        }
         @media (max-width: 900px) { 
             .main-layout { 
                 grid-template-columns: 1fr; 
@@ -330,12 +327,8 @@
     </div>
 
     <script>
-        // Simulasi API URL (dalam aplikasi sebenar, ini akan menjadi URL sebenar)
+        // URL API Google Apps Script (gantikan dengan URL anda)
         const API_URL = 'https://script.google.com/macros/s/AKfycbyMQXAX9sm3qGDsgCbHYn7yr1wqnlL9QkPI9BzMYrV9btXkJAcMtchzYAQlfTzdPDoQ/exec';
-        
-        // Data contoh untuk simulasi (akan digantikan dengan data dari API)
-        let otRecords = [];
-        let leaveRecords = [];
         
         const otForm = document.getElementById('ot-form');
         const leaveForm = document.getElementById('leave-form');
@@ -350,46 +343,30 @@
         let totalHoursDecimal = 0;
         let editingRecordId = null;
 
-        // Fungsi untuk memuatkan data dari API
+        // Fungsi untuk memuatkan semua data dari API
         async function fetchAllData() {
             recordsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Memuatkan data...</td></tr>';
             leaveRecordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
             [bakiTerkiniDisplay, jamDigunakanDisplay, jamAkanLuputDisplay].forEach(el => el.textContent = 'Memuat...');
 
             try {
-                // Simulasi panggilan API - dalam aplikasi sebenar, ganti dengan fetch(API_URL)
-                await simulateAPICall();
-                
-                // Kemaskini dashboard dengan data
-                updateDashboard();
+                const response = await fetch(API_URL);
+                const result = await response.json();
+
+                if (result.status === "success") {
+                    updateDashboard(result.data);
+                } else {
+                    throw new Error(result.message);
+                }
             } catch (error) {
                 console.error("Fetch Error:", error);
                 recordsBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Ralat: ${error.message}</td></tr>`;
+                leaveRecordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Ralat: ${error.message}</td></tr>`;
             }
         }
 
-        // Fungsi simulasi API (akan digantikan dengan panggilan API sebenar)
-        async function simulateAPICall() {
-            // Simulasi kelewatan rangkaian
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Data contoh (dalam aplikasi sebenar, data ini akan datang dari API)
-            otRecords = [
-                { id: 1, tarikh: '15/03/2023', tugasan: 'Projek Sistem', jamMula: '17:00', jamTamat: '20:30', jumlahJam: 3.5, tarikhLuput: '15/09/2023', status: 'Tersedia' },
-                { id: 2, tarikh: '22/03/2023', tugasan: 'Laporan Bulanan', jamMula: '18:00', jamTamat: '21:00', jumlahJam: 3.0, tarikhLuput: '22/09/2023', status: 'Tersedia' },
-                { id: 3, tarikh: '05/04/2023', tugasan: 'Mesyuarat Khas', jamMula: '19:00', jamTamat: '22:15', jumlahJam: 3.25, tarikhLuput: '05/10/2023', status: 'Digunakan' },
-                { id: 4, tarikh: '10/05/2023', tugasan: 'Latihan Kakitangan', jamMula: '16:30', jamTamat: '19:45', jumlahJam: 3.25, tarikhLuput: '10/11/2023', status: 'Tersedia' }
-            ];
-            
-            leaveRecords = [
-                { tarikhMohon: '10/04/2023', tarikhMula: '12/04/2023', tarikhTamat: '14/04/2023', bilanganHari: 3, jumlahJam: 25.5 }
-            ];
-            
-            return { status: "success", data: { ot_records: otRecords, leave_records: leaveRecords } };
-        }
-
-        // Fungsi untuk mengemas kini dashboard
-        function updateDashboard() {
+        // Fungsi untuk mengemas kini dashboard dengan data dari API
+        function updateDashboard(data) {
             recordsBody.innerHTML = '';
             let bakiJam = 0;
             let jamDigunakanTotal = 0;
@@ -398,11 +375,11 @@
             const thirtyDaysFromNow = new Date();
             thirtyDaysFromNow.setDate(today.getDate() + 30);
 
-            if (otRecords.length === 0) {
+            if (!data.ot_records || data.ot_records.length === 0) {
                 recordsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Tiada data...</td></tr>';
             } else {
                 // Susun rekod mengikut tarikh luput (terawal dahulu)
-                const sortedRecords = [...otRecords].sort((a, b) => {
+                const sortedRecords = [...data.ot_records].sort((a, b) => {
                     const dateA = parseDate(a.tarikhLuput);
                     const dateB = parseDate(b.tarikhLuput);
                     return dateA - dateB;
@@ -452,14 +429,14 @@
                 // Tambah event listeners untuk butang edit dan padam
                 document.querySelectorAll('.edit-record').forEach(button => {
                     button.addEventListener('click', function() {
-                        const recordId = parseInt(this.getAttribute('data-id'));
-                        editRecord(recordId);
+                        const recordId = this.getAttribute('data-id');
+                        editRecord(recordId, data.ot_records);
                     });
                 });
                 
                 document.querySelectorAll('.delete-record').forEach(button => {
                     button.addEventListener('click', function() {
-                        const recordId = parseInt(this.getAttribute('data-id'));
+                        const recordId = this.getAttribute('data-id');
                         deleteRecord(recordId);
                     });
                 });
@@ -470,10 +447,10 @@
             jamAkanLuputDisplay.textContent = `${jamAkanLuput.toFixed(2)} Jam`;
 
             leaveRecordsBody.innerHTML = '';
-            if (leaveRecords.length === 0) {
+            if (!data.leave_records || data.leave_records.length === 0) {
                 leaveRecordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada rekod cuti...</td></tr>';
             } else {
-                leaveRecords.forEach(record => {
+                data.leave_records.forEach(record => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${record.tarikhMohon}</td>
@@ -491,6 +468,12 @@
         function parseDate(dateStr) {
             if (!dateStr) return new Date();
             
+            // Jika format sudah YYYY-MM-DD
+            if (dateStr.includes('-')) {
+                return new Date(dateStr);
+            }
+            
+            // Jika format DD/MM/YYYY
             const [day, month, year] = dateStr.split('/');
             return new Date(`${year}-${month}-${day}`);
         }
@@ -511,8 +494,8 @@
         }
 
         // Fungsi untuk mengedit rekod
-        function editRecord(recordId) {
-            const record = otRecords.find(r => r.id === recordId);
+        function editRecord(recordId, otRecords) {
+            const record = otRecords.find(r => r.id == recordId);
             if (!record) return;
             
             // Jika sedang mengedit rekod lain, batalkan dulu
@@ -528,7 +511,7 @@
             
             for (let row of rows) {
                 const editButton = row.querySelector('.edit-record');
-                if (editButton && parseInt(editButton.getAttribute('data-id')) === recordId) {
+                if (editButton && editButton.getAttribute('data-id') === recordId) {
                     targetRow = row;
                     break;
                 }
@@ -557,11 +540,11 @@
                             <div class="row">
                                 <div class="col">
                                     <label for="edit-jamMula">Masa Mula</label>
-                                    <input type="time" id="edit-jamMula" value="${record.jamMula}" required>
+                                    <input type="time" id="edit-jamMula" value="${record.jamMula || '17:00'}" required>
                                 </div>
                                 <div class="col">
                                     <label for="edit-jamTamat">Masa Tamat</label>
-                                    <input type="time" id="edit-jamTamat" value="${record.jamTamat}" required>
+                                    <input type="time" id="edit-jamTamat" value="${record.jamTamat || '20:00'}" required>
                                 </div>
                             </div>
                             <div class="row">
@@ -618,10 +601,7 @@
         }
 
         // Fungsi untuk menyimpan perubahan rekod
-        function saveEditedRecord(recordId) {
-            const recordIndex = otRecords.findIndex(r => r.id === recordId);
-            if (recordIndex === -1) return;
-            
+        async function saveEditedRecord(recordId) {
             const tarikh = document.getElementById('edit-tarikh').value;
             const tugasan = document.getElementById('edit-tugasan').value;
             const jamMula = document.getElementById('edit-jamMula').value;
@@ -634,30 +614,50 @@
             tarikhTugasan.setMonth(tarikhTugasan.getMonth() + 6);
             const tarikhLuput = formatDate(tarikhTugasan);
             
-            // Kemaskini rekod
-            otRecords[recordIndex] = {
-                ...otRecords[recordIndex],
+            // Data untuk dihantar ke API
+            const formData = {
+                action: 'update_ot',
+                id: recordId,
                 tarikh: formatDate(new Date(tarikh)),
-                tugasan,
-                jamMula,
-                jamTamat,
-                jumlahJam,
-                tarikhLuput,
-                status
+                tugasan: tugasan,
+                jamMula: jamMula,
+                jamTamat: jamTamat,
+                jumlahJam: jumlahJam,
+                tarikhLuput: tarikhLuput,
+                status: status
             };
             
-            // Keluar dari mod edit
-            cancelEdit();
-            
-            // Kemaskini paparan
-            updateDashboard();
-            
-            // Tunjukkan mesej kejayaan
-            otStatusDiv.textContent = 'Rekod berjaya dikemaskini!';
-            otStatusDiv.style.color = 'green';
-            setTimeout(() => {
-                otStatusDiv.textContent = '';
-            }, 3000);
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Keluar dari mod edit
+                    cancelEdit();
+                    
+                    // Kemaskini paparan
+                    await fetchAllData();
+                    
+                    // Tunjukkan mesej kejayaan
+                    otStatusDiv.textContent = 'Rekod berjaya dikemaskini!';
+                    otStatusDiv.style.color = 'green';
+                    setTimeout(() => {
+                        otStatusDiv.textContent = '';
+                    }, 3000);
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                otStatusDiv.textContent = `Gagal mengemaskini: ${error.message}`;
+                otStatusDiv.style.color = 'red';
+            }
         }
 
         // Fungsi untuk membatalkan edit
@@ -676,43 +676,64 @@
             editingRecordId = null;
         }
 
-        // Fungsi untuk memadam rekod (DIPERBAIKI)
-        function deleteRecord(recordId) {
+        // Fungsi untuk memadam rekod
+        async function deleteRecord(recordId) {
             if (confirm('Adakah anda pasti ingin memadam rekod ini?')) {
-                // Cari indeks rekod yang hendak dipadam
-                const recordIndex = otRecords.findIndex(r => r.id === recordId);
-                
-                if (recordIndex !== -1) {
-                    // Padam rekod dari array
-                    otRecords.splice(recordIndex, 1);
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            action: 'delete_ot',
+                            id: recordId
+                        })
+                    });
                     
-                    // Kemaskini paparan
-                    updateDashboard();
+                    const result = await response.json();
                     
-                    // Tunjukkan mesej kejayaan
-                    otStatusDiv.textContent = 'Rekod berjaya dipadam!';
-                    otStatusDiv.style.color = 'green';
-                    setTimeout(() => {
-                        otStatusDiv.textContent = '';
-                    }, 3000);
-                } else {
-                    otStatusDiv.textContent = 'Rekod tidak ditemui!';
+                    if (result.status === 'success') {
+                        // Kemaskini paparan
+                        await fetchAllData();
+                        
+                        // Tunjukkan mesej kejayaan
+                        otStatusDiv.textContent = 'Rekod berjaya dipadam!';
+                        otStatusDiv.style.color = 'green';
+                        setTimeout(() => {
+                            otStatusDiv.textContent = '';
+                        }, 3000);
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    otStatusDiv.textContent = `Gagal memadam: ${error.message}`;
                     otStatusDiv.style.color = 'red';
-                    setTimeout(() => {
-                        otStatusDiv.textContent = '';
-                    }, 3000);
                 }
             }
         }
 
         // Fungsi untuk menukar format tarikh untuk input date
         function formatDateForInput(dateStr) {
+            if (!dateStr) return '';
+            
+            // Jika format sudah YYYY-MM-DD
+            if (dateStr.includes('-')) {
+                return dateStr;
+            }
+            
+            // Jika format DD/MM/YYYY
             const [day, month, year] = dateStr.split('/');
-            return `${year}-${month}-${day}`;
+            if (day && month && year) {
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+            
+            return '';
         }
 
         // Fungsi untuk memformat tarikh ke DD/MM/YYYY
         function formatDate(date) {
+            if (!date) return '';
             const d = new Date(date);
             const day = String(d.getDate()).padStart(2, '0');
             const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -730,95 +751,106 @@
             });
             
             // Event listener untuk form OT
-            otForm.addEventListener('submit', function(e) {
+            otForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
+                
+                const submitButton = document.getElementById('submit-ot-button');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Menyimpan...';
+                otStatusDiv.textContent = '';
                 
                 const tarikh = document.getElementById('tarikh').value;
                 const tugasan = document.getElementById('tugasan').value;
-                const jamMula = document.getElementById('jamMula').value;
-                const jamTamat = document.getElementById('jamTamat').value;
                 
-                // Kira tarikh luput (6 bulan dari tarikh tugasan)
-                const tarikhTugasan = new Date(tarikh);
-                tarikhTugasan.setMonth(tarikhTugasan.getMonth() + 6);
-                const tarikhLuput = formatDate(tarikhTugasan);
-                
-                // Tambah rekod baru
-                const newRecord = {
-                    id: otRecords.length > 0 ? Math.max(...otRecords.map(r => r.id)) + 1 : 1,
+                // Data untuk dihantar ke API
+                const formData = {
+                    action: 'add_ot',
                     tarikh: formatDate(new Date(tarikh)),
-                    tugasan,
-                    jamMula,
-                    jamTamat,
-                    jumlahJam: totalHoursDecimal,
-                    tarikhLuput,
-                    status: 'Tersedia'
+                    tugasan: tugasan,
+                    jumlahJam: totalHoursDecimal
                 };
                 
-                otRecords.push(newRecord);
-                
-                // Reset form
-                this.reset();
-                document.getElementById('jumlahJamDisplay').value = '';
-                
-                // Kemaskini paparan
-                updateDashboard();
-                
-                // Tunjukkan mesej kejayaan
-                otStatusDiv.textContent = 'Rekod berjaya disimpan!';
-                otStatusDiv.style.color = 'green';
-                setTimeout(() => {
-                    otStatusDiv.textContent = '';
-                }, 3000);
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        // Reset form
+                        this.reset();
+                        document.getElementById('jumlahJamDisplay').value = '';
+                        
+                        // Kemaskini paparan
+                        await fetchAllData();
+                        
+                        // Tunjukkan mesej kejayaan
+                        otStatusDiv.textContent = 'Rekod berjaya disimpan!';
+                        otStatusDiv.style.color = 'green';
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    otStatusDiv.textContent = `Gagal menyimpan: ${error.message}`;
+                    otStatusDiv.style.color = 'red';
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Simpan Rekod';
+                }
             });
             
             // Event listener untuk form cuti
-            leaveForm.addEventListener('submit', function(e) {
+            leaveForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const startDate = document.getElementById('leaveStartDate').value;
-                const endDate = document.getElementById('leaveEndDate').value;
-                
-                // Kira bilangan hari bekerja
-                let workingDays = 0;
-                let currentDate = new Date(startDate);
-                const end = new Date(endDate);
-                
-                while (currentDate <= end) {
-                    const dayOfWeek = currentDate.getDay();
-                    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Bukan Ahad atau Sabtu
-                        workingDays++;
-                    }
-                    currentDate.setDate(currentDate.getDate() + 1);
-                }
-                
-                // Kira jumlah jam (8 jam sehari)
-                const totalHours = workingDays * 8;
-                
-                // Tambah rekod cuti baru
-                const newLeaveRecord = {
-                    tarikhMohon: formatDate(new Date()),
-                    tarikhMula: formatDate(new Date(startDate)),
-                    tarikhTamat: formatDate(new Date(endDate)),
-                    bilanganHari: workingDays,
-                    jumlahJam: totalHours
+                const submitButton = document.getElementById('submit-leave-button');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Memproses...';
+                leaveStatusDiv.textContent = '';
+
+                const formData = {
+                    action: 'apply_leave',
+                    startDate: document.getElementById('leaveStartDate').value,
+                    endDate: document.getElementById('leaveEndDate').value
                 };
-                
-                leaveRecords.push(newLeaveRecord);
-                
-                // Reset form
-                this.reset();
-                hoursNeededDisplay.textContent = '0 Jam';
-                
-                // Kemaskini paparan
-                updateDashboard();
-                
-                // Tunjukkan mesej kejayaan
-                leaveStatusDiv.textContent = 'Cuti berjaya dimohon!';
-                leaveStatusDiv.style.color = 'green';
-                setTimeout(() => {
-                    leaveStatusDiv.textContent = '';
-                }, 3000);
+
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        // Reset form
+                        this.reset();
+                        hoursNeededDisplay.textContent = '0 Jam';
+                        
+                        // Kemaskini paparan
+                        await fetchAllData();
+                        
+                        // Tunjukkan mesej kejayaan
+                        leaveStatusDiv.textContent = result.message;
+                        leaveStatusDiv.style.color = 'green';
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    leaveStatusDiv.textContent = `Gagal: ${error.message}`;
+                    leaveStatusDiv.style.color = 'red';
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Mohon Cuti';
+                }
             });
             
             // Event listeners untuk mengira jam cuti yang diperlukan
