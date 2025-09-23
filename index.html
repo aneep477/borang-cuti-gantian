@@ -30,6 +30,9 @@
         .status-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: bold; }
         .status-tersedia { background-color: #dcfce7; color: #166534; }
         .status-digunakan { background-color: #fee2e2; color: #991b1b; }
+        .status-hampir-luput { background-color: #fef3c7; color: #92400e; }
+        .sortable { cursor: pointer; user-select: none; }
+        .sortable:hover { background-color: #f1f5f9; }
         @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -74,7 +77,15 @@
                 <h2>Rekod Kerja Lebih Masa</h2>
                 <div style="max-height: 400px; overflow-y: auto;">
                     <table class="data-table">
-                        <thead><tr><th>Tarikh</th><th>Tugasan</th><th>Jumlah Jam</th><th>Tarikh Luput</th><th>Status</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Tarikh</th>
+                                <th>Tugasan</th>
+                                <th>Jumlah Jam</th>
+                                <th class="sortable" id="sort-expiry">Tarikh Luput ▼</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
                         <tbody id="ot-records-body"></tbody>
                     </table>
                 </div>
@@ -102,7 +113,9 @@
         const jamDigunakanDisplay = document.getElementById('jam-digunakan');
         const jamAkanLuputDisplay = document.getElementById('jam-akan-luput');
         const hoursNeededDisplay = document.getElementById('hours-needed');
+        const sortExpiryButton = document.getElementById('sort-expiry');
         let totalHoursDecimal = 0;
+        let currentSortOrder = 'asc'; // 'asc' untuk tarikh luput terawal dahulu
 
         async function fetchAllData() {
             recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Memuatkan data...</td></tr>';
@@ -124,6 +137,34 @@
             }
         }
 
+        // Fungsi untuk menukar format tarikh dari DD/MM/YYYY ke YYYY-MM-DD untuk pengurusan
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            
+            // Jika format sudah YYYY-MM-DD
+            if (dateStr.includes('-')) {
+                return new Date(dateStr);
+            }
+            
+            // Jika format DD/MM/YYYY
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+            }
+            
+            return null;
+        }
+
+        // Fungsi untuk memformat tarikh ke DD/MM/YYYY untuk paparan
+        function formatDate(date) {
+            if (!date) return '';
+            const d = new Date(date);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
         function updateDashboard(data) {
             recordsBody.innerHTML = '';
             let bakiJam = 0;
@@ -136,31 +177,68 @@
             if (!data.ot_records || data.ot_records.length === 0) {
                 recordsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada data...</td></tr>';
             } else {
-                // Isihan tidak lagi diperlukan di sini kerana Apps Script telah melakukannya
-                data.ot_records.forEach(record => {
-                    const [day, month, year] = record.tarikhLuput.split('/');
-                    const expiryDate = new Date(`${year}-${month}-${day}`);
+                // Proses dan susun data berdasarkan tarikh luput
+                const processedRecords = data.ot_records.map(record => {
+                    const expiryDate = parseDate(record.tarikhLuput);
                     
-                    if (record.status === 'Tersedia') {
-                        bakiJam += record.jumlahJam;
-                        if (expiryDate <= thirtyDaysFromNow && expiryDate >= today) {
+                    // Tentukan status berdasarkan tarikh luput
+                    let status = record.status;
+                    let statusClass = record.status === 'Tersedia' ? 'status-tersedia' : 'status-digunakan';
+                    
+                    if (status === 'Tersedia' && expiryDate) {
+                        const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                        
+                        if (daysUntilExpiry <= 30 && daysUntilExpiry >= 0) {
+                            statusClass = 'status-hampir-luput';
+                            status = 'Hampir Luput';
                             jamAkanLuput += record.jumlahJam;
+                        } else if (daysUntilExpiry < 0) {
+                            statusClass = 'status-digunakan';
+                            status = 'Telah Luput';
                         }
-                    } else if (record.status === 'Digunakan') {
+                        
+                        if (status === 'Tersedia' || status === 'Hampir Luput') {
+                            bakiJam += record.jumlahJam;
+                        }
+                    } else if (status === 'Digunakan') {
                         jamDigunakanTotal += record.jumlahJam;
                     }
                     
+                    return {
+                        ...record,
+                        expiryDate: expiryDate,
+                        status: status,
+                        statusClass: statusClass
+                    };
+                });
+
+                // Susun rekod berdasarkan tarikh luput (terawal dahulu)
+                processedRecords.sort((a, b) => {
+                    if (!a.expiryDate && !b.expiryDate) return 0;
+                    if (!a.expiryDate) return 1;
+                    if (!b.expiryDate) return -1;
+                    
+                    if (currentSortOrder === 'asc') {
+                        return a.expiryDate - b.expiryDate;
+                    } else {
+                        return b.expiryDate - a.expiryDate;
+                    }
+                });
+
+                // Paparkan rekod yang telah disusun
+                processedRecords.forEach(record => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${record.tarikh}</td>
                         <td>${record.tugasan}</td>
                         <td>${record.jumlahJam.toFixed(2)}</td>
                         <td>${record.tarikhLuput}</td>
-                        <td><span class="status-badge ${record.status === 'Tersedia' ? 'status-tersedia' : 'status-digunakan'}">${record.status}</span></td>
+                        <td><span class="status-badge ${record.statusClass}">${record.status}</span></td>
                     `;
                     recordsBody.appendChild(row);
                 });
             }
+            
             bakiTerkiniDisplay.textContent = `${bakiJam.toFixed(2)} Jam`;
             jamDigunakanDisplay.textContent = `${jamDigunakanTotal.toFixed(2)} Jam`;
             jamAkanLuputDisplay.textContent = `${jamAkanLuput.toFixed(2)} Jam`;
@@ -185,6 +263,7 @@
 
         document.addEventListener('DOMContentLoaded', fetchAllData);
 
+        // Fungsi untuk mengira tempoh masa antara mula dan tamat
         function calculateDuration() {
             const startTime = document.getElementById('jamMula').value;
             const endTime = document.getElementById('jamTamat').value;
@@ -200,6 +279,7 @@
         }
         ['jamMula', 'jamTamat'].forEach(id => document.getElementById(id).addEventListener('change', calculateDuration));
         
+        // Fungsi untuk menghantar data OT
         otForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const submitButton = document.getElementById('submit-ot-button');
@@ -207,10 +287,21 @@
             submitButton.textContent = 'Menyimpan...';
             otStatusDiv.textContent = '';
             
-            const formData = { action: 'add_ot', tarikh: document.getElementById('tarikh').value, tugasan: document.getElementById('tugasan').value, jumlahJam: totalHoursDecimal };
+            const formData = { 
+                action: 'add_ot', 
+                tarikh: document.getElementById('tarikh').value, 
+                tugasan: document.getElementById('tugasan').value, 
+                jumlahJam: totalHoursDecimal 
+            };
             
             try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
+                const response = await fetch(API_URL, { 
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData) 
+                });
                 const result = await response.json();
                 if (result.status === 'success') {
                     otStatusDiv.textContent = 'Rekod berjaya disimpan!';
@@ -219,7 +310,9 @@
                     document.getElementById('jumlahJamDisplay').value = "";
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     await fetchAllData();
-                } else { throw new Error(result.message); }
+                } else { 
+                    throw new Error(result.message); 
+                }
             } catch (error) {
                 otStatusDiv.textContent = `Gagal menyimpan: ${error.message}`;
                 otStatusDiv.style.color = 'red';
@@ -229,6 +322,7 @@
             }
         });
 
+        // Fungsi untuk mengira jam cuti yang diperlukan
         function calculateRequiredHours() {
             const startDateStr = document.getElementById('leaveStartDate').value;
             const endDateStr = document.getElementById('leaveEndDate').value;
@@ -260,6 +354,7 @@
         document.getElementById('leaveStartDate').addEventListener('input', calculateRequiredHours);
         document.getElementById('leaveEndDate').addEventListener('input', calculateRequiredHours);
 
+        // Fungsi untuk menghantar permohonan cuti
         leaveForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const submitButton = document.getElementById('submit-leave-button');
@@ -274,7 +369,13 @@
             };
 
             try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(formData) });
+                const response = await fetch(API_URL, { 
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData) 
+                });
                 const result = await response.json();
                 if (result.status === 'success') {
                     leaveStatusDiv.textContent = result.message;
@@ -283,7 +384,9 @@
                     hoursNeededDisplay.textContent = '0 Jam';
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     await fetchAllData();
-                } else { throw new Error(result.message); }
+                } else { 
+                    throw new Error(result.message); 
+                }
             } catch (error) {
                 leaveStatusDiv.textContent = `Gagal: ${error.message}`;
                 leaveStatusDiv.style.color = 'red';
@@ -291,6 +394,13 @@
                 submitButton.disabled = false;
                 submitButton.textContent = 'Mohon Cuti';
             }
+        });
+
+        // Fungsi untuk menyusun semula jadual berdasarkan tarikh luput
+        sortExpiryButton.addEventListener('click', function() {
+            currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+            this.innerHTML = currentSortOrder === 'asc' ? 'Tarikh Luput ▼' : 'Tarikh Luput ▲';
+            fetchAllData();
         });
     </script>
 </body>
