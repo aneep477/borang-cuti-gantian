@@ -5,124 +5,160 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>C-HRIS PRO | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; min-height: 100vh; }
-        .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
-        .input-glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 12px; }
-        .btn-primary { background: #3b82f6; transition: 0.3s; }
-        .btn-primary:hover { background: #2563eb; transform: scale(1.02); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; }
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
+        .input-style { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 12px; width: 100%; padding: 10px; font-size: 13px; }
+        .input-style:focus { border-color: #3b82f6; outline: none; }
+        .btn-action { transition: 0.3s; font-weight: bold; border-radius: 12px; }
+        .btn-action:hover { transform: translateY(-2px); opacity: 0.9; }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-6xl mx-auto">
-        <header class="mb-10 flex justify-between items-center">
-            <h1 class="text-2xl font-bold italic">C-HRIS <span class="text-blue-500">PRO</span></h1>
-            <div id="user-tag" class="text-xs bg-blue-500/20 text-blue-400 px-4 py-2 rounded-full font-bold uppercase tracking-wider">Haniff Faizal</div>
+<body class="p-6 md:p-10">
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-2xl font-black italic">C-HRIS <span class="text-blue-500">PRO</span></h1>
+            <div class="glass px-4 py-2 text-[10px] font-bold text-blue-400 tracking-widest uppercase">● HANIFF FAIZAL</div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="glass-card p-6 text-center">
-                <p class="text-slate-500 text-xs font-bold uppercase mb-2">Baki Jam Semasa</p>
-                <span id="baki-jam" class="text-4xl font-black">0.00</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="glass p-8">
+                <p class="text-slate-500 text-xs font-bold uppercase mb-1">Baki Jam Semasa</p>
+                <div class="text-5xl font-black" id="stat-baki">0.00 <span class="text-sm">HRS</span></div>
             </div>
+            <div class="glass p-8">
+                <p class="text-red-500 text-xs font-bold uppercase mb-1">Akan Luput (30H)</p>
+                <div class="text-5xl font-black text-red-500">0.00</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4 space-y-6">
+                <div class="glass p-6">
+                    <h2 class="text-sm font-bold mb-4 text-blue-400 italic underline">+ Rekod OT Baru</h2>
+                    <form id="ot-form" class="space-y-3">
+                        <input type="date" id="ot-date" class="input-style" required>
+                        <input type="text" id="ot-task" placeholder="Nama Tugasan/Event" class="input-style" required>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="time" id="ot-start" class="input-style" required>
+                            <input type="time" id="ot-end" class="input-style" required>
+                        </div>
+                        <p id="ot-calc" class="text-[10px] text-blue-300 font-bold uppercase">0 Jam 0 Minit</p>
+                        <button type="submit" class="w-full btn-action bg-blue-600 py-3 text-sm">Simpan Rekod</button>
+                    </form>
+                </div>
+
+                <div class="glass p-6 border-emerald-500/20">
+                    <h2 class="text-sm font-bold mb-4 text-emerald-400 italic underline">🌴 Mohon Cuti & Lampiran A</h2>
+                    <form id="lv-form" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="date" id="lv-s" class="input-style" required>
+                            <input type="date" id="lv-e" class="input-style" required>
+                        </div>
+                        <select id="lv-t" class="input-style" required>
+                            <option value="">-- Pilih Tugasan --</option>
+                        </select>
+                        <input type="number" id="lv-d" placeholder="Bilangan Hari Cuti" class="input-style" required>
+                        <button type="submit" id="lv-btn" class="w-full btn-action bg-emerald-600 py-3 text-sm">Jana Lampiran A</button>
+                    </form>
+                </div>
             </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div class="glass-card p-8">
-                <h2 class="text-xl font-bold mb-6 text-blue-400 italic italic">🌴 Mohon Cuti & Automasi Lampiran A</h2>
-                <form id="leave-form" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="date" id="start-date" class="input-glass p-4 w-full" required>
-                        <input type="date" id="end-date" class="input-glass p-4 w-full" required>
+            <div class="lg:col-span-8">
+                <div class="glass h-full overflow-hidden">
+                    <div class="p-6 border-b border-white/5 font-bold italic text-slate-400">Log Aktiviti Semasa</div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-white/5 text-slate-500 uppercase">
+                                <tr>
+                                    <th class="p-5">Tarikh</th>
+                                    <th class="p-5">Tugasan</th>
+                                    <th class="p-5">Jam</th>
+                                    <th class="p-5 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="divide-y divide-white/5"></tbody>
+                        </table>
                     </div>
-                    <select id="task-select" class="input-glass p-4 w-full cursor-pointer" required>
-                        <option value="">-- Pilih Tugasan Untuk Cuti --</option>
-                    </select>
-                    <input type="number" id="days-count" placeholder="Bilangan Hari (Contoh: 2)" class="input-glass p-4 w-full" required>
-                    
-                    <button type="submit" id="submit-btn" class="w-full btn-primary p-4 rounded-xl font-bold shadow-lg shadow-blue-500/20">
-                        Jana Lampiran A Sekarang
-                    </button>
-                </form>
-            </div>
-
-            <div class="glass-card p-6 overflow-hidden">
-                <h2 class="text-lg font-bold mb-4 opacity-50 uppercase tracking-tighter">Senarai OT Tersedia</h2>
-                <div class="overflow-y-auto max-h-80">
-                    <table class="w-full text-sm">
-                        <tbody id="ot-table-body" class="divide-y divide-white/5">
-                            </tbody>
-                    </table>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
+        const API = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
 
-        async function init() {
-            try {
-                const res = await fetch(API_URL);
-                const result = await res.json();
-                if (result.status === "success") {
-                    const otRecords = result.data.ot_records;
-                    
-                    // Update Baki
-                    let total = 0;
-                    otRecords.forEach(r => { if(r.status === 'Tersedia') total += r.jumlahJam; });
-                    document.getElementById('baki-jam').innerText = total.toFixed(2);
+        async function refresh() {
+            const res = await fetch(API);
+            const json = await res.json();
+            if (json.status === "success") {
+                const body = document.getElementById('table-body');
+                const select = document.getElementById('lv-t');
+                let baki = 0;
 
-                    // Update Table & Dropdown
-                    const table = document.getElementById('ot-table-body');
-                    const select = document.getElementById('task-select');
-                    
-                    otRecords.forEach(r => {
-                        if(r.status === 'Tersedia') {
-                            table.innerHTML += `<tr><td class="py-3">${r.tarikh}</td><td class="font-bold">${r.tugasan}</td><td class="text-right text-blue-400">${r.jumlahJam}j</td></tr>`;
-                            select.innerHTML += `<option value="${r.tugasan}">${r.tugasan} (${r.jumlahJam}j)</option>`;
-                        }
-                    });
-                }
-            } catch (e) { console.log(e); }
+                body.innerHTML = '';
+                select.innerHTML = '<option value="">-- Pilih Tugasan --</option>';
+
+                json.data.forEach(r => {
+                    const isAvail = r.status === 'Tersedia';
+                    if(isAvail) {
+                        baki += r.jumlahJam;
+                        select.innerHTML += `<option value="${r.tugasan}">${r.tugasan} (${r.jumlahJam}j)</option>`;
+                    }
+                    body.innerHTML += `<tr>
+                        <td class="p-5 text-slate-400">${r.tarikh}</td>
+                        <td class="p-5 font-bold">${r.tugasan}</td>
+                        <td class="p-5 text-blue-400 font-mono">${r.jumlahJam}j</td>
+                        <td class="p-5 text-right uppercase font-black text-[9px] ${isAvail?'text-green-400':'text-red-500'}">${r.status}</td>
+                    </tr>`;
+                });
+                document.getElementById('stat-baki').innerHTML = baki.toFixed(2) + ' <span class="text-sm">HRS</span>';
+            }
         }
 
-        document.getElementById('leave-form').addEventListener('submit', async (e) => {
+        // Logic Tambah OT
+        document.getElementById('ot-form').onsubmit = async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            btn.innerText = "Sedang Menjana Sheet...";
-            btn.disabled = true;
+            const payload = {
+                action: 'add_ot',
+                tarikh: document.getElementById('ot-date').value,
+                tugasan: document.getElementById('ot-task').value,
+                jumlahJam: calc()
+            };
+            await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+            location.reload();
+        };
 
+        function calc() {
+            const s = document.getElementById('ot-start').value, e = document.getElementById('ot-end').value;
+            if(!s || !e) return 0;
+            const diff = (new Date(`1970-01-01T${e}`) - new Date(`1970-01-01T${s}`)) / 3600000;
+            const res = diff < 0 ? diff + 24 : diff;
+            document.getElementById('ot-calc').innerText = res.toFixed(2) + " JAM";
+            return res;
+        }
+
+        // Logic Mohon Cuti
+        document.getElementById('lv-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('lv-btn');
+            btn.innerText = "Memproses...";
             const payload = {
                 action: 'apply_leave',
-                startDate: document.getElementById('start-date').value,
-                endDate: document.getElementById('end-date').value,
-                tugasanDipilih: document.getElementById('task-select').value,
-                bilHari: document.getElementById('days-count').value
+                startDate: document.getElementById('lv-s').value,
+                endDate: document.getElementById('lv-e').value,
+                tugasanDipilih: document.getElementById('lv-t').value,
+                bilHari: document.getElementById('lv-d').value
             };
+            const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+            const data = await res.json();
+            if(data.status === "success") { window.open(data.url, '_blank'); location.reload(); }
+        };
 
-            try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await response.json();
-                
-                if (result.status === "success") {
-                    alert("Berjaya! Lampiran A telah dicipta.");
-                    window.open(result.url, '_blank'); // Buka sheet baru terus
-                    location.reload();
-                } else {
-                    alert("Ralat: " + result.message);
-                }
-            } catch (err) {
-                alert("Gagal menghubungi server.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Jana Lampiran A Sekarang";
-            }
-        });
-
-        init();
+        document.getElementById('ot-start').onchange = calc;
+        document.getElementById('ot-end').onchange = calc;
+        refresh();
     </script>
 </body>
 </html>
