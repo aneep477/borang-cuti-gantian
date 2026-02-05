@@ -10,10 +10,17 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; min-height: 100vh; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
         .input-style { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 12px; width: 100%; padding: 10px; font-size: 13px; }
-        .input-style:focus { border-color: #3b82f6; outline: none; }
+        
+        /* PEMBETULAN WARNA FONT DROPDOWN */
+        select.input-style option {
+            background-color: white; /* Latar belakang senarai pilihan */
+            color: #1e3a8a;          /* Warna teks biru gelap */
+            font-weight: 600;
+        }
+
         .btn-blue { background: #007bff; border-radius: 12px; font-weight: 600; transition: 0.3s; }
         .btn-blue:hover { transform: translateY(-2px); background: #0056b3; }
-        .warning-row { background: rgba(239, 68, 68, 0.1) !important; border-left: 4px solid #ef4444; }
+        .warning-row { background: rgba(239, 68, 68, 0.15) !important; border-left: 4px solid #ef4444; }
     </style>
 </head>
 <body class="p-6 md:p-10">
@@ -54,14 +61,14 @@
                     <h2 class="text-sm font-bold mb-4 text-emerald-400 italic underline">🌴 Mohon Cuti & Lampiran A</h2>
                     <form id="lv-form" class="space-y-3">
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="date" id="lv-s" class="input-style" required>
-                            <input type="date" id="lv-e" class="input-style" required>
+                            <input type="date" id="lv-s" class="input-style" required title="Tarikh Mula Cuti">
+                            <input type="date" id="lv-e" class="input-style" required title="Tarikh Tamat Cuti">
                         </div>
                         <select id="lv-t" class="input-style" required>
-                            <option value="">-- Pilih Tugasan --</option>
+                            <option value="" disabled selected>-- Pilih Tugasan Untuk Cuti --</option>
                         </select>
-                        <input type="number" id="lv-d" placeholder="Bilangan Hari Cuti" class="input-style" required>
-                        <button type="submit" id="lv-btn" class="w-full bg-emerald-600 py-3 rounded-xl font-bold text-sm">Jana Lampiran A</button>
+                        <input type="number" id="lv-d" placeholder="Bilangan Hari Cuti (Cth: 2)" class="input-style" required>
+                        <button type="submit" id="lv-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-bold text-sm transition-all">Jana Lampiran A</button>
                     </form>
                 </div>
             </div>
@@ -89,52 +96,60 @@
     </div>
 
     <script>
-        const API = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
+        const API = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec'; // Gantikan dengan URL Apps Script anda
 
         async function refresh() {
-            const res = await fetch(API);
-            const json = await res.json();
-            if (json.status === "success") {
-                const body = document.getElementById('table-body');
-                const select = document.getElementById('lv-t');
-                let totalBaki = 0;
-                let totalLuput = 0;
-                const hariIni = new Date();
+            try {
+                const res = await fetch(API);
+                const json = await res.json();
+                if (json.status === "success") {
+                    const body = document.getElementById('table-body');
+                    const select = document.getElementById('lv-t');
+                    let totalBaki = 0;
+                    let totalLuput = 0;
+                    const hariIni = new Date();
 
-                body.innerHTML = '';
-                select.innerHTML = '<option value="">-- Pilih Tugasan --</option>';
+                    body.innerHTML = '';
+                    select.innerHTML = '<option value="" disabled selected>-- Pilih Tugasan Untuk Cuti --</option>';
 
-                json.data.forEach(r => {
-                    const isAvail = r.status === 'Tersedia';
-                    const luputDate = new Date(r.tarikhLuput);
-                    const diffTime = luputDate - hariIni;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    const isWarning = isAvail && diffDays <= 30;
-                    if(isAvail) totalBaki += r.jumlahJam;
-                    if(isWarning) totalLuput += r.jumlahJam;
+                    json.data.forEach(r => {
+                        const isAvail = r.status === 'Tersedia';
+                        const luputDate = new Date(r.tarikhLuput);
+                        const diffTime = luputDate - hariIni;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        const isWarning = isAvail && diffDays <= 30;
+                        if(isAvail) totalBaki += r.jumlahJam;
+                        if(isWarning) totalLuput += r.jumlahJam;
 
-                    if(isAvail) select.innerHTML += `<option value="${r.tugasan}">${r.tugasan} (${r.jumlahJam}j)</option>`;
+                        if(isAvail) {
+                            let opt = document.createElement('option');
+                            opt.value = r.tugasan;
+                            opt.text = `${r.tugasan} (${r.jumlahJam.toFixed(2)}j)`;
+                            select.add(opt);
+                        }
 
-                    body.innerHTML += `
-                        <tr class="${isWarning ? 'warning-row' : ''}">
-                            <td class="p-5 text-slate-400">${new Date(r.tarikh).toLocaleDateString('ms-MY')}</td>
-                            <td class="p-5 font-bold text-slate-200">${r.tugasan}</td>
-                            <td class="p-5 text-blue-400 font-mono font-bold">${r.jumlahJam.toFixed(2)}j</td>
-                            <td class="p-5 ${isWarning ? 'text-red-400 font-bold' : 'text-slate-400'}">${luputDate.toLocaleDateString('ms-MY')}</td>
-                            <td class="p-5 text-right">
-                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${isAvail ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}">${r.status}</span>
-                            </td>
-                        </tr>`;
-                });
-                document.getElementById('stat-baki').innerHTML = totalBaki.toFixed(2) + ' <span class="text-sm">HRS</span>';
-                document.getElementById('stat-luput').innerText = totalLuput.toFixed(2);
-            }
+                        body.innerHTML += `
+                            <tr class="${isWarning ? 'warning-row' : ''}">
+                                <td class="p-5 text-slate-400">${new Date(r.tarikh).toLocaleDateString('ms-MY')}</td>
+                                <td class="p-5 font-bold text-slate-200">${r.tugasan}</td>
+                                <td class="p-5 text-blue-400 font-mono font-bold">${r.jumlahJam.toFixed(2)}j</td>
+                                <td class="p-5 ${isWarning ? 'text-red-400 font-bold' : 'text-slate-400'}">${luputDate.toLocaleDateString('ms-MY')}</td>
+                                <td class="p-5 text-right">
+                                    <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${isAvail ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}">${r.status}</span>
+                                </td>
+                            </tr>`;
+                    });
+                    document.getElementById('stat-baki').innerHTML = totalBaki.toFixed(2) + ' <span class="text-sm">HRS</span>';
+                    document.getElementById('stat-luput').innerText = totalLuput.toFixed(2);
+                }
+            } catch (e) { console.error("Ralat memuat data:", e); }
         }
 
-        // Simpan OT
         document.getElementById('ot-form').onsubmit = async (e) => {
             e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.innerText = "Simpan..."; btn.disabled = true;
             const payload = {
                 action: 'add_ot',
                 tarikh: document.getElementById('ot-date').value,
@@ -145,7 +160,6 @@
             location.reload();
         };
 
-        // Kira Jam
         function calc() {
             const s = document.getElementById('ot-start').value, e = document.getElementById('ot-end').value;
             if(!s || !e) return;
@@ -154,7 +168,6 @@
             document.getElementById('ot-calc').innerText = diff.toFixed(2) + " JAM";
         }
 
-        // Mohon Cuti
         document.getElementById('lv-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('lv-btn');
@@ -166,9 +179,14 @@
                 tugasanDipilih: document.getElementById('lv-t').value,
                 bilHari: document.getElementById('lv-d').value
             };
-            const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-            const data = await res.json();
-            if(data.status === "success") { window.open(data.url, '_blank'); location.reload(); }
+            try {
+                const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+                const data = await res.json();
+                if(data.status === "success") { 
+                    window.open(data.url, '_blank'); 
+                    location.reload(); 
+                }
+            } catch (err) { alert("Ralat jana lampiran!"); btn.disabled = false; btn.innerText = "Jana Lampiran A"; }
         };
 
         document.getElementById('ot-start').onchange = calc;
