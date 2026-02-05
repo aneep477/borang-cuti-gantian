@@ -11,16 +11,18 @@
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
         .input-style { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 12px; width: 100%; padding: 10px; font-size: 13px; }
         
-        /* PEMBETULAN WARNA FONT DROPDOWN */
         select.input-style option {
-            background-color: white; /* Latar belakang senarai pilihan */
-            color: #1e3a8a;          /* Warna teks biru gelap */
+            background-color: white;
+            color: #1e3a8a;
             font-weight: 600;
         }
 
         .btn-blue { background: #007bff; border-radius: 12px; font-weight: 600; transition: 0.3s; }
         .btn-blue:hover { transform: translateY(-2px); background: #0056b3; }
         .warning-row { background: rgba(239, 68, 68, 0.15) !important; border-left: 4px solid #ef4444; }
+        
+        /* Gaya Amaran Ralat */
+        .error-msg { color: #ef4444; font-size: 11px; font-weight: bold; margin-top: 5px; display: none; }
     </style>
 </head>
 <body class="p-6 md:p-10">
@@ -64,11 +66,13 @@
                             <input type="date" id="lv-s" class="input-style" required title="Tarikh Mula Cuti">
                             <input type="date" id="lv-e" class="input-style" required title="Tarikh Tamat Cuti">
                         </div>
+                        <p id="date-error" class="error-msg">⚠️ Permohonan mestilah sekurang-kurangnya 14 hari dari hari ini.</p>
+                        
                         <select id="lv-t" class="input-style" required>
                             <option value="" disabled selected>-- Pilih Tugasan Untuk Cuti --</option>
                         </select>
                         <input type="number" id="lv-d" placeholder="Bilangan Hari Cuti (Cth: 2)" class="input-style" required>
-                        <button type="submit" id="lv-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-bold text-sm transition-all">Jana Lampiran A</button>
+                        <button type="submit" id="lv-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-bold text-sm transition-all">Jana Lampiran A Sekarang</button>
                     </form>
                 </div>
             </div>
@@ -146,6 +150,7 @@
             } catch (e) { console.error("Ralat memuat data:", e); }
         }
 
+        // Simpan OT
         document.getElementById('ot-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
@@ -168,10 +173,31 @@
             document.getElementById('ot-calc').innerText = diff.toFixed(2) + " JAM";
         }
 
+        // MOHON CUTI DENGAN VALIDASI 2 MINGGU
         document.getElementById('lv-form').onsubmit = async (e) => {
             e.preventDefault();
+            
+            const tarikhMulaCuti = new Date(document.getElementById('lv-s').value);
+            const hariIni = new Date();
+            hariIni.setHours(0,0,0,0); // Set masa ke tgh malam untuk perbandingan tarikh sahaja
+            
+            // Pengiraan perbezaan hari
+            const diffTime = tarikhMulaCuti - hariIni;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const errorLabel = document.getElementById('date-error');
+
+            if (diffDays < 14) {
+                errorLabel.style.display = 'block';
+                document.getElementById('lv-s').classList.add('border-red-500');
+                return; // Berhenti di sini, jangan hantar data
+            } else {
+                errorLabel.style.display = 'none';
+                document.getElementById('lv-s').classList.remove('border-red-500');
+            }
+
             const btn = document.getElementById('lv-btn');
             btn.innerText = "Menjana..."; btn.disabled = true;
+            
             const payload = {
                 action: 'apply_leave',
                 startDate: document.getElementById('lv-s').value,
@@ -179,6 +205,7 @@
                 tugasanDipilih: document.getElementById('lv-t').value,
                 bilHari: document.getElementById('lv-d').value
             };
+
             try {
                 const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
                 const data = await res.json();
