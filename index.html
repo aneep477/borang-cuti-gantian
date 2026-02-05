@@ -3,248 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C-HRIS | Premium Dashboard</title>
+    <title>C-HRIS PRO | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-
-        :root {
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --glow-color: rgba(56, 189, 248, 0.15);
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: radial-gradient(circle at 0% 0%, #0f172a 0%, #020617 100%);
-            color: #f8fafc;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Animated Liquid Background Shaders */
-        .liquid-blob {
-            position: fixed;
-            width: 500px;
-            height: 500px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
-            filter: blur(80px);
-            border-radius: 50%;
-            z-index: -1;
-            opacity: 0.15;
-            animation: mix 20s infinite alternate;
-        }
-
-        @keyframes mix {
-            0% { transform: translate(-10%, -10%) scale(1); }
-            100% { transform: translate(50%, 40%) scale(1.2); }
-        }
-
-        /* Glassmorphism Card with Mouse Glow */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s ease, border-color 0.3s ease;
-        }
-
-        .glass-card:hover {
-            border-color: rgba(56, 189, 248, 0.4);
-            transform: translateY(-5px);
-        }
-
-        /* Micro-interaction: Mouse Follow Glow */
-        .glow-overlay {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle 200px at var(--x) var(--y), var(--glow-color), transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-
-        .glass-card:hover .glow-overlay { opacity: 1; }
-
-        /* Floating Input Effect */
-        .input-glass {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .input-glass:focus {
-            border-color: #38bdf8;
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
-            outline: none;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        :root { --glass: rgba(255, 255, 255, 0.03); --border: rgba(255, 255, 255, 0.1); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; min-height: 100vh; }
+        .glass-card { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 24px; position: relative; transition: all 0.3s ease; }
+        .glass-card:hover { border-color: #38bdf8; transform: translateY(-5px); }
+        .glow { position: absolute; inset: 0; background: radial-gradient(circle 200px at var(--x) var(--y), rgba(56,189,248,0.15), transparent); opacity: 0; transition: 0.3s; pointer-events: none; }
+        .glass-card:hover .glow { opacity: 1; }
+        .input-glass { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; transition: 0.3s; }
+        .input-glass:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 15px rgba(56,189,248,0.2); }
     </style>
 </head>
-<body class="p-4 md:p-10">
-    <div class="liquid-blob"></div>
-
+<body class="p-6 md:p-12">
     <div class="max-w-7xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-12 animate__animated animate__fadeIn">
+        <header class="flex justify-between items-center mb-12 animate__animated animate__fadeIn">
             <div>
-                <h1 class="text-4xl font-extrabold tracking-tighter text-white italic">
-                    C-HRIS <span class="text-blue-500 font-light not-italic text-2xl">PRO</span>
-                </h1>
-                <p class="text-slate-400 font-medium uppercase tracking-[0.2em] text-[10px] mt-1">Sistem Pengurusan Cuti Gantian (FIFO)</p>
+                <h1 class="text-3xl font-extrabold italic">C-HRIS <span class="text-blue-500">PRO</span></h1>
+                <p class="text-slate-500 text-[10px] tracking-[0.2em] uppercase">Sistem Pengurusan Cuti Gantian</p>
             </div>
-            <div class="mt-4 md:mt-0 glass-card px-6 py-3 flex items-center gap-3">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-xs font-bold text-slate-300 uppercase" id="current-user">Haniff Faizal</span>
-            </div>
+            <div class="glass-card px-4 py-2 text-xs font-bold text-blue-400">● HANIFF FAIZAL</div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <div class="glass-card p-8 animate__animated animate__zoomIn">
-                <div class="glow-overlay"></div>
-                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest">Baki Jam Semasa</h3>
-                <div class="text-5xl font-black mt-3 flex items-baseline gap-2">
-                    <span id="baki-terkini" class="bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-500">0.00</span>
-                    <span class="text-sm text-blue-400 uppercase">Hrs</span>
-                </div>
+                <div class="glow"></div>
+                <p class="text-slate-400 text-xs font-bold uppercase">Baki Jam Semasa</p>
+                <h2 id="baki-terkini" class="text-5xl font-black mt-2">0.00</h2>
             </div>
             <div class="glass-card p-8 animate__animated animate__zoomIn" style="animation-delay: 0.1s">
-                <div class="glow-overlay"></div>
-                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest text-red-400">Jam Bakal Luput</h3>
-                <div class="text-5xl font-black mt-3 flex items-baseline gap-2">
-                    <span id="jam-akan-luput" class="text-red-400">0.00</span>
-                    <span class="text-sm text-red-500/50 uppercase italic">30 Hari</span>
-                </div>
+                <div class="glow"></div>
+                <p class="text-red-400 text-xs font-bold uppercase">Akan Luput (30H)</p>
+                <h2 id="jam-akan-luput" class="text-5xl font-black mt-2 text-red-400">0.00</h2>
             </div>
             <div class="glass-card p-8 animate__animated animate__zoomIn" style="animation-delay: 0.2s">
-                <div class="glow-overlay"></div>
-                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest">Jumlah Digunakan</h3>
-                <div class="text-5xl font-black mt-3 flex items-baseline gap-2 opacity-60">
-                    <span id="jam-digunakan">0.00</span>
-                    <span class="text-sm uppercase">Hrs</span>
-                </div>
+                <div class="glow"></div>
+                <p class="text-slate-400 text-xs font-bold uppercase">Jam Digunakan</p>
+                <h2 id="jam-digunakan" class="text-5xl font-black mt-2 opacity-40">0.00</h2>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-4 space-y-6">
-                <div class="glass-card p-8 animate__animated animate__fadeInLeft">
-                    <div class="glow-overlay"></div>
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="p-2 bg-blue-500/20 rounded-lg text-blue-400">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        </div>
-                        <h2 class="text-xl font-bold italic">Rekod Baru</h2>
+            <div class="lg:col-span-4 glass-card p-8 animate__animated animate__fadeInLeft">
+                <div class="glow"></div>
+                <h3 class="text-xl font-bold mb-6 italic">+ Rekod Baru</h3>
+                <form id="ot-form" class="space-y-4">
+                    <input type="date" id="tarikh" class="input-glass w-full p-4 rounded-xl text-sm" required>
+                    <input type="text" id="tugasan" placeholder="Nama Tugasan" class="input-glass w-full p-4 rounded-xl text-sm" required>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="time" id="jamMula" class="input-glass p-4 rounded-xl text-sm" required>
+                        <input type="time" id="jamTamat" class="input-glass p-4 rounded-xl text-sm" required>
                     </div>
-                    <form id="ot-form" class="space-y-4">
-                        <input type="date" id="tarikh" class="input-glass w-full p-4 rounded-2xl text-sm" required>
-                        <input type="text" id="tugasan" placeholder="Nama Tugasan / Event" class="input-glass w-full p-4 rounded-2xl text-sm" required>
-                        <div class="grid grid-cols-2 gap-4">
-                            <input type="time" id="jamMula" class="input-glass p-4 rounded-2xl text-sm" required>
-                            <input type="time" id="jamTamat" class="input-glass p-4 rounded-2xl text-sm" required>
-                        </div>
-                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
-                            <label class="text-[10px] uppercase font-bold text-slate-500">Kiraan Automatik</label>
-                            <input type="text" id="jumlahJamDisplay" class="bg-transparent text-lg font-bold w-full focus:outline-none" readonly value="0 Jam 0 Minit">
-                        </div>
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold p-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-500/20">
-                            Simpan Tugasan
-                        </button>
-                    </form>
-                </div>
+                    <input type="text" id="jumlahJamDisplay" class="w-full bg-transparent border-none text-blue-400 font-bold" readonly value="0 Jam 0 Minit">
+                    <button type="submit" id="btn-submit" class="w-full bg-blue-600 p-4 rounded-xl font-bold hover:bg-blue-500 transition-all">Simpan Rekod</button>
+                </form>
             </div>
 
-            <div class="lg:col-span-8">
-                <div class="glass-card animate__animated animate__fadeInRight overflow-hidden">
-                    <div class="glow-overlay"></div>
-                    <div class="p-8 border-b border-white/5 flex justify-between items-center">
-                        <h2 class="text-xl font-bold italic">Log Aktiviti Semasa</h2>
-                        <button id="pdf-button" class="px-5 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-bold uppercase hover:bg-emerald-500 hover:text-white transition-all">
-                            Export Lampiran A
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                                <tr>
-                                    <th class="px-8 py-4">Tarikh</th>
-                                    <th class="px-8 py-4">Tugasan</th>
-                                    <th class="px-8 py-4 text-center">Durasi</th>
-                                    <th class="px-8 py-4 text-right">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ot-records-body" class="text-sm divide-y divide-white/5">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="lg:col-span-8 glass-card overflow-hidden animate__animated animate__fadeInRight">
+                <div class="glow"></div>
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-white/5 text-[10px] uppercase text-slate-500 font-bold">
+                        <tr>
+                            <th class="p-6">Tarikh</th>
+                            <th class="p-6">Tugasan</th>
+                            <th class="p-6">Jam</th>
+                            <th class="p-6 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ot-records-body" class="divide-y divide-white/5"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 1. Micro-interactions: Mouse Follow Effect ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec'; // GANTIKAN INI
+
+        // Glow Effect Logic
         document.querySelectorAll('.glass-card').forEach(card => {
             card.addEventListener('mousemove', e => {
                 const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                card.style.setProperty('--x', `${x}px`);
-                card.style.setProperty('--y', `${y}px`);
+                card.style.setProperty('--x', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--y', `${e.clientY - rect.top}px`);
             });
         });
 
-        // --- 2. JS Logik (Guna API URL dari Backend V7.0 anda) ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
-
-        // Fungsi calculateDuration (Sama seperti sebelumnya tapi dioptimumkan)
-        function calculateDuration() {
-            const t1 = document.getElementById('jamMula').value;
-            const t2 = document.getElementById('jamTamat').value;
-            if (t1 && t2) {
-                const start = new Date(`1970-01-01T${t1}:00`);
-                let end = new Date(`1970-01-01T${t2}:00`);
-                if (end < start) end.setDate(end.getDate() + 1);
-                const diff = (end - start) / 3600000;
-                const h = Math.floor(diff);
-                const m = Math.round((diff - h) * 60);
-                document.getElementById('jumlahJamDisplay').value = `${h} Jam ${m} Minit`;
-                return diff;
-            }
-            return 0;
+        // Fetch Data
+        async function fetchAllData() {
+            try {
+                const res = await fetch(API_URL);
+                const result = await res.json();
+                if (result.status === "success") {
+                    updateStats(result.data.ot_records);
+                    updateTable(result.data.ot_records);
+                }
+            } catch (e) { console.error("Ralat fetch:", e); }
         }
 
-        // Contoh Update Dashboard (UI Injection)
-        function updateDashboard(data) {
-            const body = document.getElementById('ot-records-body');
-            body.innerHTML = '';
-            
-            data.ot_records.forEach(rec => {
-                const isTersedia = rec.status === 'Tersedia';
-                body.innerHTML += `
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-8 py-6 font-medium text-slate-400">${rec.tarikh}</td>
-                        <td class="px-8 py-6 font-bold text-slate-200">${rec.tugasan}</td>
-                        <td class="px-8 py-6 text-center font-mono">${rec.jumlahJam.toFixed(2)}j</td>
-                        <td class="px-8 py-6 text-right">
-                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${isTersedia ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}">
-                                ${rec.status}
-                            </span>
-                        </td>
-                    </tr>
-                `;
+        function updateStats(records) {
+            let baki = 0, guna = 0, luput = 0;
+            const today = new Date();
+            const limit = new Date(); limit.setDate(today.getDate() + 30);
+
+            records.forEach(r => {
+                if (r.status === 'Tersedia') {
+                    baki += r.jumlahJam;
+                    const p = r.tarikhLuput.split('/');
+                    const exp = new Date(p[2], p[1]-1, p[0]);
+                    if (exp <= limit && exp >= today) luput += r.jumlahJam;
+                } else { guna += r.jumlahJam; }
             });
+            document.getElementById('baki-terkini').innerText = baki.toFixed(2);
+            document.getElementById('jam-akan-luput').innerText = luput.toFixed(2);
+            document.getElementById('jam-digunakan').innerText = guna.toFixed(2);
         }
+
+        function updateTable(records) {
+            const body = document.getElementById('ot-records-body');
+            body.innerHTML = records.map(r => `
+                <tr class="hover:bg-white/5">
+                    <td class="p-6 text-slate-400">${r.tarikh}</td>
+                    <td class="p-6 font-bold">${r.tugasan}</td>
+                    <td class="p-6 font-mono">${r.jumlahJam.toFixed(2)}j</td>
+                    <td class="p-6 text-right">
+                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${r.status==='Tersedia'?'bg-green-500/10 text-green-400':'bg-red-500/10 text-red-400'}">${r.status}</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Simpan Data
+        document.getElementById('ot-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.innerText = "Menyimpan...";
+            btn.disabled = true;
+
+            const payload = {
+                action: 'add_ot',
+                tarikh: document.getElementById('tarikh').value,
+                tugasan: document.getElementById('tugasan').value,
+                jumlahJam: calculateDuration()
+            };
+
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            alert("Rekod disimpan!");
+            location.reload();
+        });
+
+        function calculateDuration() {
+            const s = document.getElementById('jamMula').value, e = document.getElementById('jamTamat').value;
+            if (!s || !e) return 0;
+            const start = new Date(`1970-01-01T${s}`), end = new Date(`1970-01-01T${e}`);
+            const diff = (end < start ? end.getTime()+86400000 : end.getTime()) - start.getTime();
+            const hours = diff / 3600000;
+            document.getElementById('jumlahJamDisplay').value = hours.toFixed(2) + " Jam";
+            return hours;
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchAllData);
     </script>
 </body>
 </html>
