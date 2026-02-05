@@ -10,18 +10,9 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; min-height: 100vh; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
         .input-style { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 12px; width: 100%; padding: 12px; font-size: 13px; }
-        
-        /* PEMBETULAN WARNA FONT DROPDOWN */
-        select.input-style option {
-            background-color: #ffffff;
-            color: #1e3a8a;
-            font-weight: 600;
-        }
-
+        select.input-style option { background-color: #ffffff; color: #1e3a8a; font-weight: 600; }
         .btn-blue { background: #007bff; border-radius: 12px; font-weight: 700; transition: 0.3s; }
-        .btn-blue:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
         .btn-green { background: #10b981; border-radius: 12px; font-weight: 700; transition: 0.3s; }
-        
         .warning-row { background: rgba(239, 68, 68, 0.1) !important; border-left: 4px solid #ef4444; }
         .error-text { color: #ef4444; font-size: 11px; font-weight: bold; display: none; margin-top: 4px; }
     </style>
@@ -36,58 +27,56 @@
             <div class="glass px-4 py-2 text-[10px] font-bold text-blue-400 tracking-widest uppercase">● HANIFF FAIZAL</div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="glass p-8 text-center md:text-left">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <div class="glass p-8">
                 <p class="text-slate-500 text-[10px] font-bold uppercase mb-2">Baki Jam Semasa</p>
                 <div class="text-4xl font-black" id="stat-baki">0.00 <span class="text-xs text-blue-500">HRS</span></div>
             </div>
-            <div class="glass p-8 text-center md:text-left">
+            <div class="glass p-8">
                 <p class="text-red-500 text-[10px] font-bold uppercase mb-2">Akan Luput (30H)</p>
                 <div class="text-4xl font-black text-red-500" id="stat-luput">0.00</div>
-            </div>
-            <div class="glass p-8 text-center md:text-left">
-                <p class="text-slate-500 text-[10px] font-bold uppercase mb-2">Jumlah Digunakan</p>
-                <div class="text-4xl font-black text-slate-400">0.00 <span class="text-xs">HRS</span></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-4 space-y-6">
                 <div class="glass p-6">
-                    <h2 class="text-xs font-bold mb-4 text-blue-400 italic uppercase tracking-wider">+ Rekod OT Baru</h2>
+                    <h2 class="text-xs font-bold mb-4 text-blue-400 italic uppercase underline">+ Rekod OT Baru</h2>
                     <form id="ot-form" class="space-y-3">
                         <input type="date" id="ot-date" class="input-style" required>
-                        <input type="text" id="ot-task" placeholder="Nama Tugasan / Event" class="input-style" required>
+                        <input type="text" id="ot-task" placeholder="Nama Tugasan" class="input-style" required>
                         <div class="grid grid-cols-2 gap-2">
                             <input type="time" id="ot-start" class="input-style" required>
                             <input type="time" id="ot-end" class="input-style" required>
                         </div>
                         <p id="ot-calc" class="text-[10px] text-blue-400 font-black">0.00 JAM</p>
-                        <button type="submit" class="w-full btn-blue py-4 text-xs uppercase">Simpan Rekod</button>
+                        <button type="submit" class="w-full btn-blue py-4 text-xs">SIMPAN REKOD</button>
                     </form>
                 </div>
 
                 <div class="glass p-6">
-                    <h2 class="text-xs font-bold mb-4 text-emerald-400 italic uppercase tracking-wider">🌴 Mohon Cuti & Lampiran A</h2>
+                    <h2 class="text-xs font-bold mb-4 text-emerald-400 italic uppercase underline">🌴 Mohon Cuti & Lampiran A</h2>
                     <form id="lv-form" class="space-y-3">
                         <div class="grid grid-cols-2 gap-2">
                             <input type="date" id="lv-s" class="input-style" required>
                             <input type="date" id="lv-e" class="input-style" required>
                         </div>
-                        <p id="date-error" class="error-text">⚠️ Permohonan mesti 14 hari lebih awal.</p>
+                        <p id="date-error" class="error-text">⚠️ Perlu 14 hari sebelum tarikh cuti.</p>
                         
                         <select id="lv-t" class="input-style" required>
                             <option value="" disabled selected>-- Pilih Tugasan Untuk Cuti --</option>
                         </select>
                         <input type="number" id="lv-d" placeholder="Bilangan Hari Cuti" class="input-style" required>
-                        <button type="submit" id="lv-btn" class="w-full btn-green py-4 text-xs uppercase">Jana Lampiran A</button>
+                        <p id="hour-error" class="error-text">⚠️ Jam tugasan tidak mencukupi untuk hari dipilih.</p>
+                        
+                        <button type="submit" id="lv-btn" class="w-full btn-green py-4 text-xs">JANA LAMPIRAN A</button>
                     </form>
                 </div>
             </div>
 
             <div class="lg:col-span-8">
                 <div class="glass h-full overflow-hidden">
-                    <div class="p-6 border-b border-white/5 font-bold italic text-slate-500 text-xs tracking-widest uppercase">Log Aktiviti Semasa</div>
+                    <div class="p-6 border-b border-white/5 font-bold italic text-slate-500 text-xs uppercase">Log Aktiviti Semasa</div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-[11px]">
                             <thead class="bg-white/5 text-slate-500 font-bold uppercase">
@@ -109,18 +98,20 @@
 
     <script>
         const API = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
+        let recordsData = [];
 
         async function refresh() {
             const res = await fetch(API);
             const json = await res.json();
             if (json.status === "success") {
+                recordsData = json.data;
                 const body = document.getElementById('table-body');
                 const select = document.getElementById('lv-t');
                 let baki = 0, luputCount = 0;
                 const hariIni = new Date();
 
                 body.innerHTML = '';
-                select.innerHTML = '<option value="" disabled selected>-- Pilih Tugasan Untuk Cuti --</option>';
+                select.innerHTML = '<option value="" disabled selected>-- Pilih Tugasan --</option>';
 
                 json.data.forEach(r => {
                     const isAvail = r.status === 'Tersedia';
@@ -131,16 +122,13 @@
                     if(isAvail) {
                         baki += r.jumlahJam;
                         if(isWarning) luputCount += r.jumlahJam;
-                        let opt = document.createElement('option');
-                        opt.value = r.tugasan;
-                        opt.text = `${r.tugasan} (${r.jumlahJam.toFixed(2)}j)`;
-                        select.add(opt);
+                        select.innerHTML += `<option value="${r.tugasan}">${r.tugasan} (${r.jumlahJam}j)</option>`;
                     }
 
                     body.innerHTML += `
                         <tr class="${isWarning ? 'warning-row' : ''}">
                             <td class="p-5 text-slate-500">${new Date(r.tarikh).toLocaleDateString('ms-MY')}</td>
-                            <td class="p-5 font-bold text-slate-300 uppercase">${r.tugasan}</td>
+                            <td class="p-5 font-bold text-slate-300">${r.tugasan}</td>
                             <td class="p-5 text-blue-400 font-mono font-bold">${r.jumlahJam.toFixed(2)}j</td>
                             <td class="p-5 ${isWarning ? 'text-red-400 font-bold' : 'text-slate-500'}">${dExp.toLocaleDateString('ms-MY')}</td>
                             <td class="p-5 text-right font-black uppercase text-[9px] ${isAvail?'text-green-400':'text-red-500'}">${r.status}</td>
@@ -151,37 +139,61 @@
             }
         }
 
-        // Logic Mohon Cuti & Rekod
         document.getElementById('lv-form').onsubmit = async (e) => {
             e.preventDefault();
-            const startCuti = new Date(document.getElementById('lv-s').value);
-            const diff = Math.ceil((startCuti - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+            const startStr = document.getElementById('lv-s').value;
+            const bilHari = parseInt(document.getElementById('lv-d').value);
+            const taskName = document.getElementById('lv-t').value;
             
-            if(diff < 14) {
-                document.getElementById('date-error').style.display = 'block';
+            // 1. Validasi 14 Hari
+            const startCuti = new Date(startStr);
+            const diff14 = Math.ceil((startCuti - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+            if(diff14 < 14) { document.getElementById('date-error').style.display = 'block'; return; }
+            else { document.getElementById('date-error').style.display = 'none'; }
+
+            // 2. Logik Pengiraan Jam Mengikut Hari
+            let jamDiperlukan = 0;
+            let currentDay = new Date(startCuti);
+            for(let i=0; i < bilHari; i++) {
+                let day = currentDay.getDay(); // 0=Ahad, 4=Khamis
+                jamDiperlukan += (day === 4) ? 7.5 : 9; 
+                currentDay.setDate(currentDay.getDate() + 1);
+            }
+
+            // Semak jika jam tugasan mencukupi
+            const selectedTask = recordsData.find(r => r.tugasan === taskName);
+            if(selectedTask.jumlahJam < jamDiperlukan) {
+                document.getElementById('hour-error').innerText = `⚠️ Jam tugasan (${selectedTask.jumlahJam}j) tidak cukup. Perlu ${jamDiperlukan}j.`;
+                document.getElementById('hour-error').style.display = 'block';
                 return;
+            } else {
+                document.getElementById('hour-error').style.display = 'none';
             }
 
             const btn = document.getElementById('lv-btn');
-            btn.innerText = "Merekod..."; btn.disabled = true;
+            btn.innerText = "MENJANA..."; btn.disabled = true;
             
             const payload = {
                 action: 'apply_leave',
-                startDate: document.getElementById('lv-s').value,
+                startDate: startStr,
                 endDate: document.getElementById('lv-e').value,
-                tugasanDipilih: document.getElementById('lv-t').value,
-                bilHari: document.getElementById('lv-d').value
+                tugasanDipilih: taskName,
+                bilHari: bilHari
             };
 
             const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
             const result = await res.json();
-            if(result.status === "success") {
-                window.open(result.url, '_blank');
-                location.reload();
-            }
+            if(result.status === "success") { window.open(result.url, '_blank'); location.reload(); }
         };
 
-        // Simpan OT & Kiraan Jam
+        function calc() {
+            const s = document.getElementById('ot-start').value, e = document.getElementById('ot-end').value;
+            if(!s || !e) return;
+            let d = (new Date(`1970-01-01T${e}`) - new Date(`1970-01-01T${s}`)) / 3600000;
+            if(d < 0) d += 24;
+            document.getElementById('ot-calc').innerText = d.toFixed(2) + " JAM";
+        }
+
         document.getElementById('ot-form').onsubmit = async (e) => {
             e.preventDefault();
             const payload = {
@@ -193,14 +205,6 @@
             await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
             location.reload();
         };
-
-        function calc() {
-            const s = document.getElementById('ot-start').value, e = document.getElementById('ot-end').value;
-            if(!s || !e) return;
-            let d = (new Date(`1970-01-01T${e}`) - new Date(`1970-01-01T${s}`)) / 3600000;
-            if(d < 0) d += 24;
-            document.getElementById('ot-calc').innerText = d.toFixed(2) + " JAM";
-        }
 
         document.getElementById('ot-start').onchange = calc;
         document.getElementById('ot-end').onchange = calc;
