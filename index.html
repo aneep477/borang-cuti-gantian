@@ -9,80 +9,88 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; min-height: 100vh; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
-        .input-style { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 12px; width: 100%; padding: 10px; font-size: 13px; }
+        .input-style { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 12px; width: 100%; padding: 12px; font-size: 13px; }
         
+        /* PEMBETULAN WARNA FONT DROPDOWN */
         select.input-style option {
-            background-color: white;
+            background-color: #ffffff;
             color: #1e3a8a;
             font-weight: 600;
         }
 
-        .btn-blue { background: #007bff; border-radius: 12px; font-weight: 600; transition: 0.3s; }
-        .btn-blue:hover { transform: translateY(-2px); background: #0056b3; }
-        .warning-row { background: rgba(239, 68, 68, 0.15) !important; border-left: 4px solid #ef4444; }
+        .btn-blue { background: #007bff; border-radius: 12px; font-weight: 700; transition: 0.3s; }
+        .btn-blue:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
+        .btn-green { background: #10b981; border-radius: 12px; font-weight: 700; transition: 0.3s; }
         
-        /* Gaya Amaran Ralat */
-        .error-msg { color: #ef4444; font-size: 11px; font-weight: bold; margin-top: 5px; display: none; }
+        .warning-row { background: rgba(239, 68, 68, 0.1) !important; border-left: 4px solid #ef4444; }
+        .error-text { color: #ef4444; font-size: 11px; font-weight: bold; display: none; margin-top: 4px; }
     </style>
 </head>
 <body class="p-6 md:p-10">
     <div class="max-w-7xl mx-auto">
         <header class="flex justify-between items-center mb-10">
-            <h1 class="text-2xl font-black italic tracking-tighter">C-HRIS <span class="text-blue-500">PRO</span></h1>
+            <div>
+                <h1 class="text-2xl font-black italic tracking-tighter">C-HRIS <span class="text-blue-500">PRO</span></h1>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Sistem Pengurusan Cuti Gantian (FIFO)</p>
+            </div>
             <div class="glass px-4 py-2 text-[10px] font-bold text-blue-400 tracking-widest uppercase">● HANIFF FAIZAL</div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-            <div class="glass p-8">
-                <p class="text-slate-500 text-xs font-bold uppercase mb-2">Baki Jam Semasa</p>
-                <div class="text-5xl font-black" id="stat-baki">0.00 <span class="text-sm text-blue-500">HRS</span></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="glass p-8 text-center md:text-left">
+                <p class="text-slate-500 text-[10px] font-bold uppercase mb-2">Baki Jam Semasa</p>
+                <div class="text-4xl font-black" id="stat-baki">0.00 <span class="text-xs text-blue-500">HRS</span></div>
             </div>
-            <div class="glass p-8">
-                <p class="text-red-500 text-xs font-bold uppercase mb-2">Jam Bakal Luput (30H)</p>
-                <div class="text-5xl font-black text-red-500" id="stat-luput">0.00</div>
+            <div class="glass p-8 text-center md:text-left">
+                <p class="text-red-500 text-[10px] font-bold uppercase mb-2">Akan Luput (30H)</p>
+                <div class="text-4xl font-black text-red-500" id="stat-luput">0.00</div>
+            </div>
+            <div class="glass p-8 text-center md:text-left">
+                <p class="text-slate-500 text-[10px] font-bold uppercase mb-2">Jumlah Digunakan</p>
+                <div class="text-4xl font-black text-slate-400">0.00 <span class="text-xs">HRS</span></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-4 space-y-6">
                 <div class="glass p-6">
-                    <h2 class="text-sm font-bold mb-4 text-blue-400 italic underline">+ Rekod OT Baru</h2>
+                    <h2 class="text-xs font-bold mb-4 text-blue-400 italic uppercase tracking-wider">+ Rekod OT Baru</h2>
                     <form id="ot-form" class="space-y-3">
                         <input type="date" id="ot-date" class="input-style" required>
-                        <input type="text" id="ot-task" placeholder="Nama Tugasan/Event" class="input-style" required>
+                        <input type="text" id="ot-task" placeholder="Nama Tugasan / Event" class="input-style" required>
                         <div class="grid grid-cols-2 gap-2">
                             <input type="time" id="ot-start" class="input-style" required>
                             <input type="time" id="ot-end" class="input-style" required>
                         </div>
-                        <p id="ot-calc" class="text-[10px] text-blue-300 font-bold uppercase">0.00 JAM</p>
-                        <button type="submit" class="w-full btn-blue py-3 text-sm">Simpan Rekod</button>
+                        <p id="ot-calc" class="text-[10px] text-blue-400 font-black">0.00 JAM</p>
+                        <button type="submit" class="w-full btn-blue py-4 text-xs uppercase">Simpan Rekod</button>
                     </form>
                 </div>
 
                 <div class="glass p-6">
-                    <h2 class="text-sm font-bold mb-4 text-emerald-400 italic underline">🌴 Mohon Cuti & Lampiran A</h2>
+                    <h2 class="text-xs font-bold mb-4 text-emerald-400 italic uppercase tracking-wider">🌴 Mohon Cuti & Lampiran A</h2>
                     <form id="lv-form" class="space-y-3">
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="date" id="lv-s" class="input-style" required title="Tarikh Mula Cuti">
-                            <input type="date" id="lv-e" class="input-style" required title="Tarikh Tamat Cuti">
+                            <input type="date" id="lv-s" class="input-style" required>
+                            <input type="date" id="lv-e" class="input-style" required>
                         </div>
-                        <p id="date-error" class="error-msg">⚠️ Permohonan mestilah sekurang-kurangnya 14 hari dari hari ini.</p>
+                        <p id="date-error" class="error-text">⚠️ Permohonan mesti 14 hari lebih awal.</p>
                         
                         <select id="lv-t" class="input-style" required>
                             <option value="" disabled selected>-- Pilih Tugasan Untuk Cuti --</option>
                         </select>
-                        <input type="number" id="lv-d" placeholder="Bilangan Hari Cuti (Cth: 2)" class="input-style" required>
-                        <button type="submit" id="lv-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-bold text-sm transition-all">Jana Lampiran A Sekarang</button>
+                        <input type="number" id="lv-d" placeholder="Bilangan Hari Cuti" class="input-style" required>
+                        <button type="submit" id="lv-btn" class="w-full btn-green py-4 text-xs uppercase">Jana Lampiran A</button>
                     </form>
                 </div>
             </div>
 
             <div class="lg:col-span-8">
-                <div class="glass overflow-hidden h-full">
-                    <div class="p-6 border-b border-white/5 font-bold italic text-slate-400 text-sm">Log Aktiviti Semasa</div>
+                <div class="glass h-full overflow-hidden">
+                    <div class="p-6 border-b border-white/5 font-bold italic text-slate-500 text-xs tracking-widest uppercase">Log Aktiviti Semasa</div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-white/5 text-slate-500 uppercase font-bold">
+                        <table class="w-full text-left text-[11px]">
+                            <thead class="bg-white/5 text-slate-500 font-bold uppercase">
                                 <tr>
                                     <th class="p-5">Tarikh</th>
                                     <th class="p-5">Tugasan</th>
@@ -100,61 +108,82 @@
     </div>
 
     <script>
-        const API = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec'; // Gantikan dengan URL Apps Script anda
+        const API = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
 
         async function refresh() {
-            try {
-                const res = await fetch(API);
-                const json = await res.json();
-                if (json.status === "success") {
-                    const body = document.getElementById('table-body');
-                    const select = document.getElementById('lv-t');
-                    let totalBaki = 0;
-                    let totalLuput = 0;
-                    const hariIni = new Date();
+            const res = await fetch(API);
+            const json = await res.json();
+            if (json.status === "success") {
+                const body = document.getElementById('table-body');
+                const select = document.getElementById('lv-t');
+                let baki = 0, luputCount = 0;
+                const hariIni = new Date();
 
-                    body.innerHTML = '';
-                    select.innerHTML = '<option value="" disabled selected>-- Pilih Tugasan Untuk Cuti --</option>';
+                body.innerHTML = '';
+                select.innerHTML = '<option value="" disabled selected>-- Pilih Tugasan Untuk Cuti --</option>';
 
-                    json.data.forEach(r => {
-                        const isAvail = r.status === 'Tersedia';
-                        const luputDate = new Date(r.tarikhLuput);
-                        const diffTime = luputDate - hariIni;
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        
-                        const isWarning = isAvail && diffDays <= 30;
-                        if(isAvail) totalBaki += r.jumlahJam;
-                        if(isWarning) totalLuput += r.jumlahJam;
+                json.data.forEach(r => {
+                    const isAvail = r.status === 'Tersedia';
+                    const dExp = new Date(r.tarikhLuput);
+                    const diffDays = Math.ceil((dExp - hariIni) / (1000 * 60 * 60 * 24));
+                    const isWarning = isAvail && diffDays <= 30;
 
-                        if(isAvail) {
-                            let opt = document.createElement('option');
-                            opt.value = r.tugasan;
-                            opt.text = `${r.tugasan} (${r.jumlahJam.toFixed(2)}j)`;
-                            select.add(opt);
-                        }
+                    if(isAvail) {
+                        baki += r.jumlahJam;
+                        if(isWarning) luputCount += r.jumlahJam;
+                        let opt = document.createElement('option');
+                        opt.value = r.tugasan;
+                        opt.text = `${r.tugasan} (${r.jumlahJam.toFixed(2)}j)`;
+                        select.add(opt);
+                    }
 
-                        body.innerHTML += `
-                            <tr class="${isWarning ? 'warning-row' : ''}">
-                                <td class="p-5 text-slate-400">${new Date(r.tarikh).toLocaleDateString('ms-MY')}</td>
-                                <td class="p-5 font-bold text-slate-200">${r.tugasan}</td>
-                                <td class="p-5 text-blue-400 font-mono font-bold">${r.jumlahJam.toFixed(2)}j</td>
-                                <td class="p-5 ${isWarning ? 'text-red-400 font-bold' : 'text-slate-400'}">${luputDate.toLocaleDateString('ms-MY')}</td>
-                                <td class="p-5 text-right">
-                                    <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${isAvail ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}">${r.status}</span>
-                                </td>
-                            </tr>`;
-                    });
-                    document.getElementById('stat-baki').innerHTML = totalBaki.toFixed(2) + ' <span class="text-sm">HRS</span>';
-                    document.getElementById('stat-luput').innerText = totalLuput.toFixed(2);
-                }
-            } catch (e) { console.error("Ralat memuat data:", e); }
+                    body.innerHTML += `
+                        <tr class="${isWarning ? 'warning-row' : ''}">
+                            <td class="p-5 text-slate-500">${new Date(r.tarikh).toLocaleDateString('ms-MY')}</td>
+                            <td class="p-5 font-bold text-slate-300 uppercase">${r.tugasan}</td>
+                            <td class="p-5 text-blue-400 font-mono font-bold">${r.jumlahJam.toFixed(2)}j</td>
+                            <td class="p-5 ${isWarning ? 'text-red-400 font-bold' : 'text-slate-500'}">${dExp.toLocaleDateString('ms-MY')}</td>
+                            <td class="p-5 text-right font-black uppercase text-[9px] ${isAvail?'text-green-400':'text-red-500'}">${r.status}</td>
+                        </tr>`;
+                });
+                document.getElementById('stat-baki').childNodes[0].textContent = baki.toFixed(2) + ' ';
+                document.getElementById('stat-luput').innerText = luputCount.toFixed(2);
+            }
         }
 
-        // Simpan OT
+        // Logic Mohon Cuti & Rekod
+        document.getElementById('lv-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const startCuti = new Date(document.getElementById('lv-s').value);
+            const diff = Math.ceil((startCuti - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+            
+            if(diff < 14) {
+                document.getElementById('date-error').style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('lv-btn');
+            btn.innerText = "Merekod..."; btn.disabled = true;
+            
+            const payload = {
+                action: 'apply_leave',
+                startDate: document.getElementById('lv-s').value,
+                endDate: document.getElementById('lv-e').value,
+                tugasanDipilih: document.getElementById('lv-t').value,
+                bilHari: document.getElementById('lv-d').value
+            };
+
+            const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await res.json();
+            if(result.status === "success") {
+                window.open(result.url, '_blank');
+                location.reload();
+            }
+        };
+
+        // Simpan OT & Kiraan Jam
         document.getElementById('ot-form').onsubmit = async (e) => {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
-            btn.innerText = "Simpan..."; btn.disabled = true;
             const payload = {
                 action: 'add_ot',
                 tarikh: document.getElementById('ot-date').value,
@@ -168,53 +197,10 @@
         function calc() {
             const s = document.getElementById('ot-start').value, e = document.getElementById('ot-end').value;
             if(!s || !e) return;
-            let diff = (new Date(`1970-01-01T${e}`) - new Date(`1970-01-01T${s}`)) / 3600000;
-            if(diff < 0) diff += 24;
-            document.getElementById('ot-calc').innerText = diff.toFixed(2) + " JAM";
+            let d = (new Date(`1970-01-01T${e}`) - new Date(`1970-01-01T${s}`)) / 3600000;
+            if(d < 0) d += 24;
+            document.getElementById('ot-calc').innerText = d.toFixed(2) + " JAM";
         }
-
-        // MOHON CUTI DENGAN VALIDASI 2 MINGGU
-        document.getElementById('lv-form').onsubmit = async (e) => {
-            e.preventDefault();
-            
-            const tarikhMulaCuti = new Date(document.getElementById('lv-s').value);
-            const hariIni = new Date();
-            hariIni.setHours(0,0,0,0); // Set masa ke tgh malam untuk perbandingan tarikh sahaja
-            
-            // Pengiraan perbezaan hari
-            const diffTime = tarikhMulaCuti - hariIni;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            const errorLabel = document.getElementById('date-error');
-
-            if (diffDays < 14) {
-                errorLabel.style.display = 'block';
-                document.getElementById('lv-s').classList.add('border-red-500');
-                return; // Berhenti di sini, jangan hantar data
-            } else {
-                errorLabel.style.display = 'none';
-                document.getElementById('lv-s').classList.remove('border-red-500');
-            }
-
-            const btn = document.getElementById('lv-btn');
-            btn.innerText = "Menjana..."; btn.disabled = true;
-            
-            const payload = {
-                action: 'apply_leave',
-                startDate: document.getElementById('lv-s').value,
-                endDate: document.getElementById('lv-e').value,
-                tugasanDipilih: document.getElementById('lv-t').value,
-                bilHari: document.getElementById('lv-d').value
-            };
-
-            try {
-                const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-                const data = await res.json();
-                if(data.status === "success") { 
-                    window.open(data.url, '_blank'); 
-                    location.reload(); 
-                }
-            } catch (err) { alert("Ralat jana lampiran!"); btn.disabled = false; btn.innerText = "Jana Lampiran A"; }
-        };
 
         document.getElementById('ot-start').onchange = calc;
         document.getElementById('ot-end').onchange = calc;
