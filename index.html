@@ -10,7 +10,7 @@
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; }
         .input-style { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 10px; width: 100%; padding: 10px; font-size: 13px; }
         select.input-style option { background: white; color: #1e3a8a; }
-        .warning-row { background: rgba(239, 68, 68, 0.1) !important; border-left: 4px solid #ef4444; }
+        .read-only { background: rgba(255, 255, 255, 0.02); color: #94a3b8; cursor: not-allowed; }
     </style>
 </head>
 <body class="p-8">
@@ -42,13 +42,18 @@
                     <h2 class="text-emerald-400 font-bold mb-4 uppercase text-xs tracking-widest">🌴 Mohon Cuti</h2>
                     <form id="lv-form" class="space-y-3">
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="date" id="lv-s" class="input-style" required onchange="checkLogic()">
-                            <input type="date" id="lv-e" class="input-style" required>
+                            <input type="date" id="lv-s" class="input-style" required onchange="calcDays()">
+                            <input type="date" id="lv-e" class="input-style" required onchange="calcDays()">
                         </div>
+                        
                         <select id="lv-t" class="input-style" required onchange="checkLogic()">
                             <option value="" disabled selected>-- Pilih Tugasan --</option>
                         </select>
-                        <input type="number" id="lv-d" placeholder="Bilangan Hari" class="input-style" required onchange="checkLogic()">
+
+                        <div class="relative">
+                            <input type="number" id="lv-d" placeholder="Bilangan Hari" class="input-style read-only" readonly required>
+                            <span class="absolute right-3 top-3 text-[10px] text-slate-500 font-bold uppercase">Hari</span>
+                        </div>
                         
                         <div id="info-potong" class="p-3 bg-white/5 rounded-lg text-[11px] hidden">
                             <p class="text-slate-400">Jam Perlu: <span id="val-perlu" class="text-white font-bold">0</span></p>
@@ -75,6 +80,29 @@
     <script>
         const API = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
         let recordsData = [];
+
+        // FUNGSI BARU: KIRA BILANGAN HARI AUTOMATIK
+        function calcDays() {
+            const start = document.getElementById('lv-s').value;
+            const end = document.getElementById('lv-e').value;
+            const inputBilHari = document.getElementById('lv-d');
+
+            if (start && end) {
+                const d1 = new Date(start);
+                const d2 = new Date(end);
+                
+                // Kira perbezaan hari termasuk tarikh akhir (+1)
+                const diffTime = Math.abs(d2 - d1);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                
+                if (d2 >= d1) {
+                    inputBilHari.value = diffDays;
+                    checkLogic(); // Panggil logik pemotongan jam
+                } else {
+                    inputBilHari.value = "";
+                }
+            }
+        }
 
         async function refresh() {
             const res = await fetch(API);
@@ -108,7 +136,6 @@
 
             if(!startStr || !taskName || bilHari <= 0) return;
 
-            // 1. Kira Jam Diperlukan
             let jamPerlu = 0;
             let current = new Date(startStr);
             for(let i=0; i<bilHari; i++) {
@@ -116,7 +143,6 @@
                 current.setDate(current.getDate()+1);
             }
 
-            // 2. Cari Jam Tugasan
             const task = recordsData.find(r => r.tugasan === taskName);
             const baki = task.jumlahJam - jamPerlu;
 
@@ -128,11 +154,9 @@
                 err.innerText = "⚠️ Jam Tugasan Tidak Mencukupi!";
                 err.classList.remove('hidden');
                 document.getElementById('lv-btn').disabled = true;
-                document.getElementById('lv-btn').style.opacity = "0.5";
             } else {
                 err.classList.add('hidden');
                 document.getElementById('lv-btn').disabled = false;
-                document.getElementById('lv-btn').style.opacity = "1";
             }
             return jamPerlu;
         }
