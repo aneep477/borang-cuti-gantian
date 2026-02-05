@@ -2,206 +2,246 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>C-HRIS PRO | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; }
-        .input-style { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 10px; width: 100%; padding: 10px; font-size: 13px; }
-        select.input-style option { background: white; color: #1e3a8a; }
-        .read-only { background: rgba(255, 255, 255, 0.02); color: #94a3b8; cursor: not-allowed; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: radial-gradient(circle at top left, #0f172a, #020617);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        .glass { 
+            background: rgba(255, 255, 255, 0.02); 
+            backdrop-filter: blur(15px); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 24px;
+        }
+        .input-moden {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 14px;
+            padding: 14px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .input-moden:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+            outline: none;
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+            transition: all 0.3s;
+        }
+        .btn-gradient:hover:not(:disabled) {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+        .btn-gradient:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
 </head>
-<body class="p-8">
-    <div class="max-w-6xl mx-auto">
-        <h1 class="text-2xl font-black mb-8 italic">C-HRIS <span class="text-blue-500">PRO</span></h1>
+<body class="p-6 md:p-10">
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-            <div class="glass p-6"><p class="text-slate-500 text-xs font-bold uppercase">Baki Jam Semasa</p><div class="text-4xl font-black" id="stat-baki">0.00</div></div>
-            <div class="glass p-6"><p class="text-red-500 text-xs font-bold uppercase">Akan Luput (30H)</p><div class="text-4xl font-black text-red-500" id="stat-luput">0.00</div></div>
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+            <div>
+                <h1 class="text-3xl font-black italic tracking-tighter">C-HRIS <span class="text-blue-500">PRO</span></h1>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em]">Management System v2.0</p>
+            </div>
+            <div id="user-pill" class="px-5 py-2 glass border-blue-500/20 text-blue-400 text-[10px] font-black tracking-widest uppercase">
+                ● Connected: Haniff Faizal
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="glass p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10 text-4xl italic font-black">HRS</div>
+                <p class="text-slate-500 text-[10px] font-bold uppercase mb-2">Baki Jam Semasa</p>
+                <div class="text-5xl font-black italic" id="stat-baki">0.00</div>
+            </div>
+            <div class="glass p-8 border-l-4 border-red-500/40">
+                <p class="text-red-500 text-[10px] font-bold uppercase mb-2">Akan Luput (30H)</p>
+                <div class="text-5xl font-black text-red-500 italic" id="stat-luput">0.00</div>
+            </div>
+            <div class="glass p-8">
+                <p class="text-slate-500 text-[10px] font-bold uppercase mb-2">Status Tugasan</p>
+                <div class="text-sm font-bold text-slate-300" id="stat-status">Menunggu Data...</div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-4 space-y-6">
-                <div class="glass p-6">
-                    <h2 class="text-blue-400 font-bold mb-4 uppercase text-xs tracking-widest">+ Rekod OT</h2>
-                    <form id="ot-form" class="space-y-3">
-                        <input type="date" id="ot-date" class="input-style" required>
-                        <input type="text" id="ot-task" placeholder="Nama Tugasan" class="input-style" required>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="time" id="ot-start" class="input-style" required onchange="calcOT()">
-                            <input type="time" id="ot-end" class="input-style" required onchange="calcOT()">
-                        </div>
-                        <p id="ot-calc-val" class="text-xs font-bold text-blue-400">0.00 Jam</p>
-                        <button type="submit" class="w-full bg-blue-600 py-3 rounded-xl font-bold text-xs uppercase">Simpan</button>
-                    </form>
-                </div>
-
-                <div class="glass p-6">
-                    <h2 class="text-emerald-400 font-bold mb-4 uppercase text-xs tracking-widest">🌴 Mohon Cuti</h2>
-                    <form id="lv-form" class="space-y-3">
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="date" id="lv-s" class="input-style" required onchange="calcDays()">
-                            <input type="date" id="lv-e" class="input-style" required onchange="calcDays()">
-                        </div>
-                        
-                        <select id="lv-t" class="input-style" required onchange="checkLogic()">
-                            <option value="" disabled selected>-- Pilih Tugasan --</option>
-                        </select>
-
-                        <div class="relative">
-                            <input type="number" id="lv-d" placeholder="Bilangan Hari" class="input-style read-only" readonly required>
-                            <span class="absolute right-3 top-3 text-[10px] text-slate-500 font-bold uppercase">Hari</span>
-                        </div>
-                        
-                        <div id="info-potong" class="p-3 bg-white/5 rounded-lg text-[11px] hidden">
-                            <p class="text-slate-400">Jam Perlu: <span id="val-perlu" class="text-white font-bold">0</span></p>
-                            <p class="text-slate-400">Baki Selepas Tolak: <span id="val-baki" class="text-blue-400 font-bold">0</span></p>
+            <div class="lg:col-span-5">
+                <div class="glass p-8">
+                    <h2 class="text-emerald-400 font-black mb-8 flex items-center gap-3 text-sm uppercase italic">
+                        <span class="bg-emerald-500/20 p-2 rounded-lg not-italic">🌴</span> Permohonan Cuti
+                    </h2>
+                    
+                    <form id="lv-form" class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Mula</label>
+                                <input type="date" id="lv-s" class="input-moden text-sm" required onchange="runAutoLogic()">
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Tamat</label>
+                                <input type="date" id="lv-e" class="input-moden text-sm" required onchange="runAutoLogic()">
+                            </div>
                         </div>
 
-                        <p id="err-msg" class="text-red-500 text-[10px] font-bold hidden"></p>
-                        <button type="submit" id="lv-btn" class="w-full bg-emerald-600 py-3 rounded-xl font-bold text-xs uppercase">Jana Lampiran</button>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Bilangan Hari</label>
+                            <input type="text" id="lv-d" class="input-moden bg-white/5" readonly placeholder="Auto-calculated">
+                        </div>
+
+                        <div id="info-panel" class="hidden p-6 rounded-2xl bg-blue-500/5 border border-blue-500/20 space-y-4 animate-in fade-in duration-500">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Jam Perlu Dipotong</span>
+                                <span id="val-perlu" class="text-2xl font-black italic text-blue-400">0.00j</span>
+                            </div>
+                            <div id="check-msg" class="text-[11px] font-bold text-center p-2 rounded-lg"></div>
+                        </div>
+
+                        <button type="submit" id="lv-btn" class="btn-gradient w-full py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest mt-4">
+                            Jana Lampiran A
+                        </button>
                     </form>
                 </div>
             </div>
 
-            <div class="lg:col-span-8 glass overflow-hidden">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-white/5 text-slate-500 uppercase">
-                        <tr><th class="p-4">Tarikh</th><th class="p-4">Tugasan</th><th class="p-4">Jam</th><th class="p-4">Luput</th><th class="p-4 text-right">Status</th></tr>
-                    </thead>
-                    <tbody id="table-body" class="divide-y divide-white/5"></tbody>
-                </table>
+            <div class="lg:col-span-7">
+                <div class="glass h-full overflow-hidden flex flex-col">
+                    <div class="p-6 border-b border-white/5">
+                        <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">Log Aktiviti OT Tersedia</h3>
+                    </div>
+                    <div class="overflow-y-auto max-h-[500px]">
+                        <table class="w-full text-left">
+                            <thead class="bg-white/5 text-[10px] font-bold text-slate-500 uppercase">
+                                <tr>
+                                    <th class="p-5">Tarikh</th>
+                                    <th class="p-5">Tugasan</th>
+                                    <th class="p-5 text-center">Jam</th>
+                                    <th class="p-5 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="divide-y divide-white/5 text-xs"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         const API = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
-        let recordsData = [];
+        let records = [];
 
-        // FUNGSI BARU: KIRA BILANGAN HARI AUTOMATIK
-        function calcDays() {
+        async function init() {
+            try {
+                const res = await fetch(API);
+                const json = await res.json();
+                if(json.status === "success") {
+                    records = json.data;
+                    renderTable();
+                }
+            } catch(e) { console.error("Sync Error"); }
+        }
+
+        function renderTable() {
+            const body = document.getElementById('table-body');
+            let total = 0;
+            body.innerHTML = '';
+
+            records.forEach(r => {
+                const isAvail = r.status === 'Tersedia';
+                if(isAvail) total += parseFloat(r.jumlahJam);
+                
+                body.innerHTML += `
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="p-5 text-slate-400">${new Date(r.tarikh).toLocaleDateString('ms-MY')}</td>
+                        <td class="p-5 font-bold uppercase tracking-tight">${r.tugasan}</td>
+                        <td class="p-5 text-center font-black text-blue-400 italic">${parseFloat(r.jumlahJam).toFixed(2)}j</td>
+                        <td class="p-5 text-right">
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${isAvail ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-500'}">
+                                ${r.status}
+                            </span>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('stat-baki').innerText = total.toFixed(2);
+            document.getElementById('stat-status').innerText = total > 0 ? "Sistem Sedia" : "Tiada Jam OT";
+        }
+
+        function runAutoLogic() {
             const start = document.getElementById('lv-s').value;
             const end = document.getElementById('lv-e').value;
-            const inputBilHari = document.getElementById('lv-d');
+            const btn = document.getElementById('lv-btn');
+            const info = document.getElementById('info-panel');
+            const msg = document.getElementById('check-msg');
 
-            if (start && end) {
-                const d1 = new Date(start);
-                const d2 = new Date(end);
-                
-                // Kira perbezaan hari termasuk tarikh akhir (+1)
-                const diffTime = Math.abs(d2 - d1);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                
-                if (d2 >= d1) {
-                    inputBilHari.value = diffDays;
-                    checkLogic(); // Panggil logik pemotongan jam
-                } else {
-                    inputBilHari.value = "";
-                }
-            }
-        }
+            if(!start || !end) return;
 
-        async function refresh() {
-            const res = await fetch(API);
-            const json = await res.json();
-            if (json.status === "success") {
-                recordsData = json.data;
-                const body = document.getElementById('table-body');
-                const select = document.getElementById('lv-t');
-                let totalBaki = 0;
-                body.innerHTML = '';
-                select.innerHTML = '<option value="" disabled selected>-- Pilih Tugasan --</option>';
+            const d1 = new Date(start);
+            const d2 = new Date(end);
+            const diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
 
-                recordsData.forEach(r => {
-                    const isAvail = r.status === 'Tersedia';
-                    if(isAvail) {
-                        totalBaki += r.jumlahJam;
-                        select.innerHTML += `<option value="${r.tugasan}">${r.tugasan} (${r.jumlahJam.toFixed(2)}j)</option>`;
-                    }
-                    body.innerHTML += `<tr><td class="p-4">${new Date(r.tarikh).toLocaleDateString('ms-MY')}</td><td class="p-4 font-bold uppercase">${r.tugasan}</td><td class="p-4 text-blue-400">${r.jumlahJam.toFixed(2)}j</td><td class="p-4 text-slate-500">${new Date(r.tarikhLuput).toLocaleDateString('ms-MY')}</td><td class="p-4 text-right ${isAvail?'text-green-400':'text-red-500'} font-black text-[10px] uppercase">${r.status}</td></tr>`;
-                });
-                document.getElementById('stat-baki').innerText = totalBaki.toFixed(2);
-            }
-        }
-
-        function checkLogic() {
-            const startStr = document.getElementById('lv-s').value;
-            const bilHari = parseInt(document.getElementById('lv-d').value) || 0;
-            const taskName = document.getElementById('lv-t').value;
-            const err = document.getElementById('err-msg');
-            const info = document.getElementById('info-potong');
-
-            if(!startStr || !taskName || bilHari <= 0) return;
-
-            let jamPerlu = 0;
-            let current = new Date(startStr);
-            for(let i=0; i<bilHari; i++) {
-                jamPerlu += (current.getDay() === 4) ? 7.5 : 9;
-                current.setDate(current.getDate()+1);
+            if(d2 < d1) {
+                alert("Tarikh tamat tidak sah!");
+                return;
             }
 
-            const task = recordsData.find(r => r.tugasan === taskName);
-            const baki = task.jumlahJam - jamPerlu;
+            document.getElementById('lv-d').value = diffDays + " Hari";
 
+            // Kira Jam Automatik
+            let totalNeeded = 0;
+            let current = new Date(d1);
+            for(let i=0; i<diffDays; i++) {
+                totalNeeded += (current.getDay() === 4) ? 7.5 : 9;
+                current.setDate(current.getDate() + 1);
+            }
+
+            document.getElementById('val-perlu').innerText = totalNeeded.toFixed(2) + "j";
             info.classList.remove('hidden');
-            document.getElementById('val-perlu').innerText = jamPerlu.toFixed(2) + "j";
-            document.getElementById('val-baki').innerText = baki.toFixed(2) + "j";
 
-            if(baki < 0) {
-                err.innerText = "⚠️ Jam Tugasan Tidak Mencukupi!";
-                err.classList.remove('hidden');
-                document.getElementById('lv-btn').disabled = true;
+            const currentBaki = parseFloat(document.getElementById('stat-baki').innerText);
+            
+            if(totalNeeded > currentBaki) {
+                msg.className = "text-[11px] font-bold text-center p-2 rounded-lg bg-red-500/10 text-red-500";
+                msg.innerText = "⚠️ Jam OT Tidak Mencukupi!";
+                btn.disabled = true;
             } else {
-                err.classList.add('hidden');
-                document.getElementById('lv-btn').disabled = false;
+                msg.className = "text-[11px] font-bold text-center p-2 rounded-lg bg-emerald-500/10 text-emerald-400";
+                msg.innerText = "✅ Jam Mencukupi. FIFO diaktifkan.";
+                btn.disabled = false;
             }
-            return jamPerlu;
         }
 
         document.getElementById('lv-form').onsubmit = async (e) => {
             e.preventDefault();
-            const jamPerlu = checkLogic();
             const btn = document.getElementById('lv-btn');
-            btn.innerText = "Memproses..."; btn.disabled = true;
+            btn.innerText = "PROCESSING...";
+            btn.disabled = true;
 
             const payload = {
                 action: 'apply_leave',
                 startDate: document.getElementById('lv-s').value,
                 endDate: document.getElementById('lv-e').value,
-                tugasanDipilih: document.getElementById('lv-t').value,
-                bilHari: document.getElementById('lv-d').value,
-                jamDiperlukan: jamPerlu
+                bilHari: document.getElementById('lv-d').value.split(' ')[0],
+                jamDiperlukan: document.getElementById('val-perlu').innerText.replace('j','')
             };
 
             const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
             const result = await res.json();
-            if(result.status === "success") { window.open(result.url, '_blank'); location.reload(); }
+            if(result.status === "success") {
+                window.open(result.url, '_blank');
+                location.reload();
+            }
         };
 
-        function calcOT() {
-            const s = document.getElementById('ot-start').value, e = document.getElementById('ot-end').value;
-            if(!s || !e) return;
-            let d = (new Date(`1970-01-01T${e}`) - new Date(`1970-01-01T${s}`)) / 3600000;
-            if(d < 0) d += 24;
-            document.getElementById('ot-calc-val').innerText = d.toFixed(2) + " Jam";
-        }
-
-        document.getElementById('ot-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const payload = {
-                action: 'add_ot',
-                tarikh: document.getElementById('ot-date').value,
-                tugasan: document.getElementById('ot-task').value,
-                jumlahJam: parseFloat(document.getElementById('ot-calc-val').innerText)
-            };
-            await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-            location.reload();
-        };
-
-        refresh();
+        init();
     </script>
 </body>
 </html>
