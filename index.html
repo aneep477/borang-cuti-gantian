@@ -8,163 +8,121 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-        :root { --glass: rgba(255, 255, 255, 0.03); --border: rgba(255, 255, 255, 0.1); }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; min-height: 100vh; }
-        .glass-card { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 24px; position: relative; transition: all 0.3s ease; }
-        .glass-card:hover { border-color: #38bdf8; transform: translateY(-5px); }
-        .glow { position: absolute; inset: 0; background: radial-gradient(circle 200px at var(--x) var(--y), rgba(56,189,248,0.15), transparent); opacity: 0; transition: 0.3s; pointer-events: none; }
-        .glass-card:hover .glow { opacity: 1; }
-        .input-glass { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; transition: 0.3s; }
-        .input-glass:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 15px rgba(56,189,248,0.2); }
+        .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
+        .input-glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 12px; }
+        .btn-primary { background: #3b82f6; transition: 0.3s; }
+        .btn-primary:hover { background: #2563eb; transform: scale(1.02); }
     </style>
 </head>
-<body class="p-6 md:p-12">
-    <div class="max-w-7xl mx-auto">
-        <header class="flex justify-between items-center mb-12 animate__animated animate__fadeIn">
-            <div>
-                <h1 class="text-3xl font-extrabold italic">C-HRIS <span class="text-blue-500">PRO</span></h1>
-                <p class="text-slate-500 text-[10px] tracking-[0.2em] uppercase">Sistem Pengurusan Cuti Gantian</p>
-            </div>
-            <div class="glass-card px-4 py-2 text-xs font-bold text-blue-400">● HANIFF FAIZAL</div>
+<body class="p-6">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-10 flex justify-between items-center">
+            <h1 class="text-2xl font-bold italic">C-HRIS <span class="text-blue-500">PRO</span></h1>
+            <div id="user-tag" class="text-xs bg-blue-500/20 text-blue-400 px-4 py-2 rounded-full font-bold uppercase tracking-wider">Haniff Faizal</div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div class="glass-card p-8 animate__animated animate__zoomIn">
-                <div class="glow"></div>
-                <p class="text-slate-400 text-xs font-bold uppercase">Baki Jam Semasa</p>
-                <h2 id="baki-terkini" class="text-5xl font-black mt-2">0.00</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="glass-card p-6 text-center">
+                <p class="text-slate-500 text-xs font-bold uppercase mb-2">Baki Jam Semasa</p>
+                <span id="baki-jam" class="text-4xl font-black">0.00</span>
             </div>
-            <div class="glass-card p-8 animate__animated animate__zoomIn" style="animation-delay: 0.1s">
-                <div class="glow"></div>
-                <p class="text-red-400 text-xs font-bold uppercase">Akan Luput (30H)</p>
-                <h2 id="jam-akan-luput" class="text-5xl font-black mt-2 text-red-400">0.00</h2>
             </div>
-            <div class="glass-card p-8 animate__animated animate__zoomIn" style="animation-delay: 0.2s">
-                <div class="glow"></div>
-                <p class="text-slate-400 text-xs font-bold uppercase">Jam Digunakan</p>
-                <h2 id="jam-digunakan" class="text-5xl font-black mt-2 opacity-40">0.00</h2>
-            </div>
-        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-4 glass-card p-8 animate__animated animate__fadeInLeft">
-                <div class="glow"></div>
-                <h3 class="text-xl font-bold mb-6 italic">+ Rekod Baru</h3>
-                <form id="ot-form" class="space-y-4">
-                    <input type="date" id="tarikh" class="input-glass w-full p-4 rounded-xl text-sm" required>
-                    <input type="text" id="tugasan" placeholder="Nama Tugasan" class="input-glass w-full p-4 rounded-xl text-sm" required>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div class="glass-card p-8">
+                <h2 class="text-xl font-bold mb-6 text-blue-400 italic italic">🌴 Mohon Cuti & Automasi Lampiran A</h2>
+                <form id="leave-form" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
-                        <input type="time" id="jamMula" class="input-glass p-4 rounded-xl text-sm" required>
-                        <input type="time" id="jamTamat" class="input-glass p-4 rounded-xl text-sm" required>
+                        <input type="date" id="start-date" class="input-glass p-4 w-full" required>
+                        <input type="date" id="end-date" class="input-glass p-4 w-full" required>
                     </div>
-                    <input type="text" id="jumlahJamDisplay" class="w-full bg-transparent border-none text-blue-400 font-bold" readonly value="0 Jam 0 Minit">
-                    <button type="submit" id="btn-submit" class="w-full bg-blue-600 p-4 rounded-xl font-bold hover:bg-blue-500 transition-all">Simpan Rekod</button>
+                    <select id="task-select" class="input-glass p-4 w-full cursor-pointer" required>
+                        <option value="">-- Pilih Tugasan Untuk Cuti --</option>
+                    </select>
+                    <input type="number" id="days-count" placeholder="Bilangan Hari (Contoh: 2)" class="input-glass p-4 w-full" required>
+                    
+                    <button type="submit" id="submit-btn" class="w-full btn-primary p-4 rounded-xl font-bold shadow-lg shadow-blue-500/20">
+                        Jana Lampiran A Sekarang
+                    </button>
                 </form>
             </div>
 
-            <div class="lg:col-span-8 glass-card overflow-hidden animate__animated animate__fadeInRight">
-                <div class="glow"></div>
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-white/5 text-[10px] uppercase text-slate-500 font-bold">
-                        <tr>
-                            <th class="p-6">Tarikh</th>
-                            <th class="p-6">Tugasan</th>
-                            <th class="p-6">Jam</th>
-                            <th class="p-6 text-right">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ot-records-body" class="divide-y divide-white/5"></tbody>
-                </table>
+            <div class="glass-card p-6 overflow-hidden">
+                <h2 class="text-lg font-bold mb-4 opacity-50 uppercase tracking-tighter">Senarai OT Tersedia</h2>
+                <div class="overflow-y-auto max-h-80">
+                    <table class="w-full text-sm">
+                        <tbody id="ot-table-body" class="divide-y divide-white/5">
+                            </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec'; // GANTIKAN INI
+        const API_URL = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
 
-        // Glow Effect Logic
-        document.querySelectorAll('.glass-card').forEach(card => {
-            card.addEventListener('mousemove', e => {
-                const rect = card.getBoundingClientRect();
-                card.style.setProperty('--x', `${e.clientX - rect.left}px`);
-                card.style.setProperty('--y', `${e.clientY - rect.top}px`);
-            });
-        });
-
-        // Fetch Data
-        async function fetchAllData() {
+        async function init() {
             try {
                 const res = await fetch(API_URL);
                 const result = await res.json();
                 if (result.status === "success") {
-                    updateStats(result.data.ot_records);
-                    updateTable(result.data.ot_records);
+                    const otRecords = result.data.ot_records;
+                    
+                    // Update Baki
+                    let total = 0;
+                    otRecords.forEach(r => { if(r.status === 'Tersedia') total += r.jumlahJam; });
+                    document.getElementById('baki-jam').innerText = total.toFixed(2);
+
+                    // Update Table & Dropdown
+                    const table = document.getElementById('ot-table-body');
+                    const select = document.getElementById('task-select');
+                    
+                    otRecords.forEach(r => {
+                        if(r.status === 'Tersedia') {
+                            table.innerHTML += `<tr><td class="py-3">${r.tarikh}</td><td class="font-bold">${r.tugasan}</td><td class="text-right text-blue-400">${r.jumlahJam}j</td></tr>`;
+                            select.innerHTML += `<option value="${r.tugasan}">${r.tugasan} (${r.jumlahJam}j)</option>`;
+                        }
+                    });
                 }
-            } catch (e) { console.error("Ralat fetch:", e); }
+            } catch (e) { console.log(e); }
         }
 
-        function updateStats(records) {
-            let baki = 0, guna = 0, luput = 0;
-            const today = new Date();
-            const limit = new Date(); limit.setDate(today.getDate() + 30);
-
-            records.forEach(r => {
-                if (r.status === 'Tersedia') {
-                    baki += r.jumlahJam;
-                    const p = r.tarikhLuput.split('/');
-                    const exp = new Date(p[2], p[1]-1, p[0]);
-                    if (exp <= limit && exp >= today) luput += r.jumlahJam;
-                } else { guna += r.jumlahJam; }
-            });
-            document.getElementById('baki-terkini').innerText = baki.toFixed(2);
-            document.getElementById('jam-akan-luput').innerText = luput.toFixed(2);
-            document.getElementById('jam-digunakan').innerText = guna.toFixed(2);
-        }
-
-        function updateTable(records) {
-            const body = document.getElementById('ot-records-body');
-            body.innerHTML = records.map(r => `
-                <tr class="hover:bg-white/5">
-                    <td class="p-6 text-slate-400">${r.tarikh}</td>
-                    <td class="p-6 font-bold">${r.tugasan}</td>
-                    <td class="p-6 font-mono">${r.jumlahJam.toFixed(2)}j</td>
-                    <td class="p-6 text-right">
-                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${r.status==='Tersedia'?'bg-green-500/10 text-green-400':'bg-red-500/10 text-red-400'}">${r.status}</span>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        // Simpan Data
-        document.getElementById('ot-form').addEventListener('submit', async (e) => {
+        document.getElementById('leave-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('btn-submit');
-            btn.innerText = "Menyimpan...";
+            const btn = document.getElementById('submit-btn');
+            btn.innerText = "Sedang Menjana Sheet...";
             btn.disabled = true;
 
             const payload = {
-                action: 'add_ot',
-                tarikh: document.getElementById('tarikh').value,
-                tugasan: document.getElementById('tugasan').value,
-                jumlahJam: calculateDuration()
+                action: 'apply_leave',
+                startDate: document.getElementById('start-date').value,
+                endDate: document.getElementById('end-date').value,
+                tugasanDipilih: document.getElementById('task-select').value,
+                bilHari: document.getElementById('days-count').value
             };
 
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-            alert("Rekod disimpan!");
-            location.reload();
+            try {
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    alert("Berjaya! Lampiran A telah dicipta.");
+                    window.open(result.url, '_blank'); // Buka sheet baru terus
+                    location.reload();
+                } else {
+                    alert("Ralat: " + result.message);
+                }
+            } catch (err) {
+                alert("Gagal menghubungi server.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Jana Lampiran A Sekarang";
+            }
         });
 
-        function calculateDuration() {
-            const s = document.getElementById('jamMula').value, e = document.getElementById('jamTamat').value;
-            if (!s || !e) return 0;
-            const start = new Date(`1970-01-01T${s}`), end = new Date(`1970-01-01T${e}`);
-            const diff = (end < start ? end.getTime()+86400000 : end.getTime()) - start.getTime();
-            const hours = diff / 3600000;
-            document.getElementById('jumlahJamDisplay').value = hours.toFixed(2) + " Jam";
-            return hours;
-        }
-
-        document.addEventListener('DOMContentLoaded', fetchAllData);
+        init();
     </script>
 </body>
 </html>
