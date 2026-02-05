@@ -7,29 +7,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; }
-        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
-        .input-style { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 12px; width: 100%; padding: 10px; font-size: 13px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; min-height: 100vh; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
+        .input-style { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 12px; width: 100%; padding: 10px; font-size: 13px; }
         .input-style:focus { border-color: #3b82f6; outline: none; }
-        .btn-action { transition: 0.3s; font-weight: bold; border-radius: 12px; }
-        .btn-action:hover { transform: translateY(-2px); opacity: 0.9; }
+        .btn-blue { background: #007bff; border-radius: 12px; font-weight: 600; transition: 0.3s; }
+        .btn-blue:hover { transform: translateY(-2px); background: #0056b3; }
+        .warning-row { background: rgba(239, 68, 68, 0.1) !important; border-left: 4px solid #ef4444; }
     </style>
 </head>
 <body class="p-6 md:p-10">
     <div class="max-w-7xl mx-auto">
         <header class="flex justify-between items-center mb-10">
-            <h1 class="text-2xl font-black italic">C-HRIS <span class="text-blue-500">PRO</span></h1>
+            <h1 class="text-2xl font-black italic tracking-tighter">C-HRIS <span class="text-blue-500">PRO</span></h1>
             <div class="glass px-4 py-2 text-[10px] font-bold text-blue-400 tracking-widest uppercase">● HANIFF FAIZAL</div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
             <div class="glass p-8">
-                <p class="text-slate-500 text-xs font-bold uppercase mb-1">Baki Jam Semasa</p>
-                <div class="text-5xl font-black" id="stat-baki">0.00 <span class="text-sm">HRS</span></div>
+                <p class="text-slate-500 text-xs font-bold uppercase mb-2">Baki Jam Semasa</p>
+                <div class="text-5xl font-black" id="stat-baki">0.00 <span class="text-sm text-blue-500">HRS</span></div>
             </div>
             <div class="glass p-8">
-                <p class="text-red-500 text-xs font-bold uppercase mb-1">Akan Luput (30H)</p>
-                <div class="text-5xl font-black text-red-500">0.00</div>
+                <p class="text-red-500 text-xs font-bold uppercase mb-2">Jam Bakal Luput (30H)</p>
+                <div class="text-5xl font-black text-red-500" id="stat-luput">0.00</div>
             </div>
         </div>
 
@@ -44,12 +45,12 @@
                             <input type="time" id="ot-start" class="input-style" required>
                             <input type="time" id="ot-end" class="input-style" required>
                         </div>
-                        <p id="ot-calc" class="text-[10px] text-blue-300 font-bold uppercase">0 Jam 0 Minit</p>
-                        <button type="submit" class="w-full btn-action bg-blue-600 py-3 text-sm">Simpan Rekod</button>
+                        <p id="ot-calc" class="text-[10px] text-blue-300 font-bold uppercase">0.00 JAM</p>
+                        <button type="submit" class="w-full btn-blue py-3 text-sm">Simpan Rekod</button>
                     </form>
                 </div>
 
-                <div class="glass p-6 border-emerald-500/20">
+                <div class="glass p-6">
                     <h2 class="text-sm font-bold mb-4 text-emerald-400 italic underline">🌴 Mohon Cuti & Lampiran A</h2>
                     <form id="lv-form" class="space-y-3">
                         <div class="grid grid-cols-2 gap-2">
@@ -60,21 +61,22 @@
                             <option value="">-- Pilih Tugasan --</option>
                         </select>
                         <input type="number" id="lv-d" placeholder="Bilangan Hari Cuti" class="input-style" required>
-                        <button type="submit" id="lv-btn" class="w-full btn-action bg-emerald-600 py-3 text-sm">Jana Lampiran A</button>
+                        <button type="submit" id="lv-btn" class="w-full bg-emerald-600 py-3 rounded-xl font-bold text-sm">Jana Lampiran A</button>
                     </form>
                 </div>
             </div>
 
             <div class="lg:col-span-8">
-                <div class="glass h-full overflow-hidden">
-                    <div class="p-6 border-b border-white/5 font-bold italic text-slate-400">Log Aktiviti Semasa</div>
+                <div class="glass overflow-hidden h-full">
+                    <div class="p-6 border-b border-white/5 font-bold italic text-slate-400 text-sm">Log Aktiviti Semasa</div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-white/5 text-slate-500 uppercase">
+                            <thead class="bg-white/5 text-slate-500 uppercase font-bold">
                                 <tr>
                                     <th class="p-5">Tarikh</th>
                                     <th class="p-5">Tugasan</th>
                                     <th class="p-5">Jam</th>
+                                    <th class="p-5">Luput</th>
                                     <th class="p-5 text-right">Status</th>
                                 </tr>
                             </thead>
@@ -95,55 +97,68 @@
             if (json.status === "success") {
                 const body = document.getElementById('table-body');
                 const select = document.getElementById('lv-t');
-                let baki = 0;
+                let totalBaki = 0;
+                let totalLuput = 0;
+                const hariIni = new Date();
 
                 body.innerHTML = '';
                 select.innerHTML = '<option value="">-- Pilih Tugasan --</option>';
 
                 json.data.forEach(r => {
                     const isAvail = r.status === 'Tersedia';
-                    if(isAvail) {
-                        baki += r.jumlahJam;
-                        select.innerHTML += `<option value="${r.tugasan}">${r.tugasan} (${r.jumlahJam}j)</option>`;
-                    }
-                    body.innerHTML += `<tr>
-                        <td class="p-5 text-slate-400">${r.tarikh}</td>
-                        <td class="p-5 font-bold">${r.tugasan}</td>
-                        <td class="p-5 text-blue-400 font-mono">${r.jumlahJam}j</td>
-                        <td class="p-5 text-right uppercase font-black text-[9px] ${isAvail?'text-green-400':'text-red-500'}">${r.status}</td>
-                    </tr>`;
+                    const luputDate = new Date(r.tarikhLuput);
+                    const diffTime = luputDate - hariIni;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    const isWarning = isAvail && diffDays <= 30;
+                    if(isAvail) totalBaki += r.jumlahJam;
+                    if(isWarning) totalLuput += r.jumlahJam;
+
+                    if(isAvail) select.innerHTML += `<option value="${r.tugasan}">${r.tugasan} (${r.jumlahJam}j)</option>`;
+
+                    body.innerHTML += `
+                        <tr class="${isWarning ? 'warning-row' : ''}">
+                            <td class="p-5 text-slate-400">${new Date(r.tarikh).toLocaleDateString('ms-MY')}</td>
+                            <td class="p-5 font-bold text-slate-200">${r.tugasan}</td>
+                            <td class="p-5 text-blue-400 font-mono font-bold">${r.jumlahJam.toFixed(2)}j</td>
+                            <td class="p-5 ${isWarning ? 'text-red-400 font-bold' : 'text-slate-400'}">${luputDate.toLocaleDateString('ms-MY')}</td>
+                            <td class="p-5 text-right">
+                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${isAvail ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}">${r.status}</span>
+                            </td>
+                        </tr>`;
                 });
-                document.getElementById('stat-baki').innerHTML = baki.toFixed(2) + ' <span class="text-sm">HRS</span>';
+                document.getElementById('stat-baki').innerHTML = totalBaki.toFixed(2) + ' <span class="text-sm">HRS</span>';
+                document.getElementById('stat-luput').innerText = totalLuput.toFixed(2);
             }
         }
 
-        // Logic Tambah OT
+        // Simpan OT
         document.getElementById('ot-form').onsubmit = async (e) => {
             e.preventDefault();
             const payload = {
                 action: 'add_ot',
                 tarikh: document.getElementById('ot-date').value,
                 tugasan: document.getElementById('ot-task').value,
-                jumlahJam: calc()
+                jumlahJam: parseFloat(document.getElementById('ot-calc').innerText)
             };
             await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
             location.reload();
         };
 
+        // Kira Jam
         function calc() {
             const s = document.getElementById('ot-start').value, e = document.getElementById('ot-end').value;
-            if(!s || !e) return 0;
-            const diff = (new Date(`1970-01-01T${e}`) - new Date(`1970-01-01T${s}`)) / 3600000;
-            const res = diff < 0 ? diff + 24 : diff;
-            document.getElementById('ot-calc').innerText = res.toFixed(2) + " JAM";
-            return res;
+            if(!s || !e) return;
+            let diff = (new Date(`1970-01-01T${e}`) - new Date(`1970-01-01T${s}`)) / 3600000;
+            if(diff < 0) diff += 24;
+            document.getElementById('ot-calc').innerText = diff.toFixed(2) + " JAM";
         }
 
-        // Logic Mohon Cuti
+        // Mohon Cuti
         document.getElementById('lv-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('lv-btn');
-            btn.innerText = "Memproses...";
+            btn.innerText = "Menjana..."; btn.disabled = true;
             const payload = {
                 action: 'apply_leave',
                 startDate: document.getElementById('lv-s').value,
