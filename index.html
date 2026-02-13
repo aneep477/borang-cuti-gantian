@@ -3,106 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-CUTI v5.1 | Sistem Cuti Gantian</title>
+    <title>E-CUTI v5.1 | Pengurusan Bersepadu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
-        :root { --neon-blue: #3b82f6; --bg-dark: #020617; }
+        :root { --neon-blue: #3b82f6; --neon-emerald: #10b981; --bg-dark: #020617; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-dark); color: white; min-height: 100vh; position: relative; }
-        
-        /* Kesan Grain Overlay */
         body::before {
             content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
             opacity: 0.03; pointer-events: none; z-index: 50;
         }
-
         .glass { background: rgba(255, 255, 255, 0.01); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; }
-        .btn-glow { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); transition: 0.3s; cursor: pointer; border: none; }
-        .btn-glow:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 30px rgba(59, 130, 246, 0.5); }
+        .btn-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); transition: 0.3s; }
+        .btn-emerald { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); transition: 0.3s; }
         .input-style { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); color: white; border-radius: 12px; padding: 10px; font-size: 12px; font-family: 'JetBrains Mono', monospace; outline: none; width: 100%; }
         .input-style:focus { border-color: var(--neon-blue); }
-        
-        /* Custom Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
     </style>
 </head>
 <body class="p-4 md:p-10">
     <div class="max-w-7xl mx-auto">
-        <header class="flex justify-between items-center mb-10">
+        <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-black italic tracking-tighter uppercase">E-CUTI <span class="text-blue-500 text-sm">v5.1</span></h1>
             <div class="glass px-6 py-2 text-[10px] font-bold text-blue-400 border border-blue-500/20 uppercase tracking-widest">● Haniff Faizal</div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-5 space-y-6">
-                <div class="glass p-8 border border-white/5 shadow-2xl">
-                    <h2 class="text-blue-400 font-black mb-6 text-xs uppercase tracking-widest flex items-center gap-2">
-                        <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span> Log OT (Custom Daily)
+                
+                <div class="glass p-6 border border-white/5 shadow-xl">
+                    <h2 class="text-blue-400 font-black mb-4 text-[10px] uppercase tracking-widest flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span> Log OT (Harian)
                     </h2>
-                    
-                    <form id="ot-form" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Tarikh Mula</label>
-                                <input type="date" id="ot-date-start" class="input-style" required onchange="generateDailyRows()">
-                            </div>
-                            <div>
-                                <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Tarikh Tamat</label>
-                                <input type="date" id="ot-date-end" class="input-style" required onchange="generateDailyRows()">
-                            </div>
+                    <form id="ot-form" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="date" id="ot-date-start" class="input-style" required onchange="generateDailyRows()">
+                            <input type="date" id="ot-date-end" class="input-style" required onchange="generateDailyRows()">
                         </div>
-
-                        <div>
-                            <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Tugasan / Acara</label>
-                            <input type="text" id="ot-task" placeholder="Contoh: Kejohanan Bola Sepak" class="input-style" required>
-                        </div>
-
-                        <div id="daily-editor" class="hidden space-y-3 pt-4 border-t border-white/5">
-                            <p class="text-[9px] text-blue-400 font-black uppercase italic">Laraskan Waktu Setiap Hari:</p>
-                            <div id="rows-container" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scroll"></div>
-                            
-                            <div class="pt-4 border-t border-white/10 flex justify-between items-center">
-                                <span class="text-[10px] font-bold uppercase text-white tracking-widest">Jumlah Jam Tugasan:</span>
-                                <span id="total-sum" class="text-2xl font-black text-blue-400">0.00j</span>
+                        <input type="text" id="ot-task" placeholder="Tugasan / Acara" class="input-style" required>
+                        <div id="daily-editor" class="hidden space-y-2 p-3 bg-white/5 rounded-xl border border-white/5">
+                            <div id="rows-container" class="space-y-2 max-h-[150px] overflow-y-auto custom-scroll"></div>
+                            <div class="pt-2 border-t border-white/10 flex justify-between">
+                                <span class="text-[9px] uppercase font-bold text-slate-400">Jumlah Jam:</span>
+                                <span id="total-sum" class="text-blue-400 font-black">0.00j</span>
                             </div>
                         </div>
-
-                        <div>
-                            <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Pautan Surat (Google Drive)</label>
-                            <input type="url" id="ot-link" placeholder="https://drive.google.com/..." class="input-style">
-                        </div>
-
-                        <button type="submit" id="submit-btn" class="btn-glow w-full py-5 rounded-2xl font-black text-xs uppercase tracking-widest text-white mt-4">
-                            Simpan Rekod
-                        </button>
+                        <input type="url" id="ot-link" placeholder="Pautan Surat" class="input-style">
+                        <button type="submit" id="submit-btn" class="btn-blue w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-white">Simpan Rekod OT</button>
                     </form>
                 </div>
+
+                <div class="glass p-6 border border-emerald-500/10 shadow-xl">
+                    <h2 class="text-emerald-400 font-black mb-4 text-[10px] uppercase tracking-widest flex items-center gap-2">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Mohon Cuti Gantian
+                    </h2>
+                    <form id="lv-form" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="date" id="lv-s" class="input-style border-emerald-500/10" required onchange="calcLeave()">
+                            <input type="date" id="lv-e" class="input-style border-emerald-500/10" required onchange="calcLeave()">
+                        </div>
+                        <input type="text" id="lv-d" class="input-style bg-white/5 opacity-60" readonly placeholder="Bilangan Hari">
+                        <div id="lv-info" class="hidden p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex justify-between items-center">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase">Jam Diperlukan:</span>
+                            <span id="lv-needed" class="text-emerald-400 font-black text-sm">0.00j</span>
+                        </div>
+                        <button type="submit" id="lv-btn" class="btn-emerald w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-white disabled:opacity-30">Jana Lampiran A</button>
+                    </form>
+                </div>
+
             </div>
 
             <div class="lg:col-span-7">
-                <div class="glass overflow-hidden border border-white/5 h-full min-h-[600px] flex flex-col">
+                <div class="glass overflow-hidden border border-white/5 h-full flex flex-col">
                     <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">Sejarah Rekod Terkumpul</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">Sejarah Rekod Terkumpul</span>
                         <div class="text-right">
-                            <p class="text-slate-500 text-[8px] font-black uppercase tracking-widest">Baki Jam Semasa</p>
+                            <p class="text-slate-500 text-[8px] font-black uppercase">Baki Jam Semasa</p>
                             <div class="text-2xl font-black text-white" id="stat-baki">0.00</div>
                         </div>
                     </div>
-                    
-                    <div class="overflow-y-auto flex-grow custom-scroll">
+                    <div class="overflow-y-auto flex-grow custom-scroll max-h-[700px]">
                         <table class="w-full text-left">
                             <thead class="bg-white/5 sticky top-0 z-10 text-[9px] font-black uppercase tracking-widest text-slate-500 border-b border-white/5">
                                 <tr>
-                                    <th class="p-5">Tarikh</th>
-                                    <th class="p-5">Butiran Tugasan</th>
-                                    <th class="p-5 text-center">Jumlah Jam</th>
-                                    <th class="p-5 text-right">Status</th>
+                                    <th class="p-4">Tarikh</th>
+                                    <th class="p-4">Butiran Tugasan</th>
+                                    <th class="p-4 text-center">Jam</th>
+                                    <th class="p-4 text-right">Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="table-body" class="divide-y divide-white/5">
-                                </tbody>
+                            <tbody id="table-body" class="divide-y divide-white/5 text-xs"></tbody>
                         </table>
                     </div>
                 </div>
@@ -111,55 +103,41 @@
     </div>
 
     <script>
-        // MASUKKAN URL /EXEC ANDA DI SINI
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbybiGrzYRTQjwrfAy9QcE7baMWARJ4Ce7BC_Nq-WXwnMZM27NOKSwBa1zdL-uV9obDB/exec';
+        let bakiSemasa = 0;
 
+        // --- FUNGSI OT HARIAN ---
         function generateDailyRows() {
-            const dS = document.getElementById('ot-date-start').value;
-            const dE = document.getElementById('ot-date-end').value;
-            const container = document.getElementById('rows-container');
-            const editor = document.getElementById('daily-editor');
-
+            const dS = document.getElementById('ot-date-start').value, dE = document.getElementById('ot-date-end').value;
             if(!dS || !dE) return;
-
-            let start = new Date(dS);
-            let end = new Date(dE);
+            let start = new Date(dS), end = new Date(dE);
             if (end < start) return;
-
-            editor.classList.remove('hidden');
+            document.getElementById('daily-editor').classList.remove('hidden');
+            const container = document.getElementById('rows-container');
             container.innerHTML = '';
-
-            let current = new Date(start);
-            while (current <= end) {
-                let dateStr = current.toISOString().split('T')[0];
-                const row = document.createElement('div');
-                row.className = 'grid grid-cols-12 gap-2 items-center bg-white/[0.03] p-3 rounded-xl border border-white/5';
-                row.innerHTML = `
-                    <div class="col-span-4 text-[10px] font-mono text-slate-400 font-bold">${dateStr}</div>
-                    <div class="col-span-3"><input type="time" class="input-style time-start" value="08:00" onchange="calcTotal()"></div>
-                    <div class="col-span-1 text-center opacity-20 text-[10px]">to</div>
-                    <div class="col-span-3"><input type="time" class="input-style time-end" value="17:00" onchange="calcTotal()"></div>
-                    <div class="col-span-1 text-right font-black text-blue-400 text-[10px] row-sum">9.00j</div>
-                    <input type="hidden" class="row-date" value="${dateStr}">
-                `;
-                container.appendChild(row);
-                current.setDate(current.getDate() + 1);
+            let cur = new Date(start);
+            while (cur <= end) {
+                let dStr = cur.toISOString().split('T')[0];
+                container.innerHTML += `<div class="grid grid-cols-12 gap-2 items-center bg-white/5 p-2 rounded-lg text-[10px]">
+                    <div class="col-span-4 font-mono">${dStr}</div>
+                    <div class="col-span-3"><input type="time" class="input-style p-1 t-start" value="08:00" onchange="calcTotalOT()"></div>
+                    <div class="col-span-1 text-center opacity-30">to</div>
+                    <div class="col-span-3"><input type="time" class="input-style p-1 t-end" value="17:00" onchange="calcTotalOT()"></div>
+                    <input type="hidden" class="r-date" value="${dStr}"><div class="col-span-1 text-right r-hrs font-bold text-blue-400">9.00j</div>
+                </div>`;
+                cur.setDate(cur.getDate() + 1);
             }
-            calcTotal();
+            calcTotalOT();
         }
 
-        function calcTotal() {
-            const rows = document.querySelectorAll('#rows-container > div');
+        function calcTotalOT() {
             let grand = 0;
-            rows.forEach(row => {
-                const s = row.querySelector('.time-start').value;
-                const e = row.querySelector('.time-end').value;
-                const date = row.querySelector('.row-date').value;
-                let sT = new Date(`${date}T${s}`);
-                let eT = new Date(`${date}T${e}`);
+            document.querySelectorAll('#rows-container > div').forEach(row => {
+                const s = row.querySelector('.t-start').value, e = row.querySelector('.t-end').value, d = row.querySelector('.r-date').value;
+                let sT = new Date(`${d}T${s}`), eT = new Date(`${d}T${e}`);
                 if (eT <= sT) eT.setDate(eT.getDate() + 1);
                 let diff = (eT - sT) / 3600000;
-                row.querySelector('.row-sum').innerText = diff.toFixed(2) + "j";
+                row.querySelector('.r-hrs').innerText = diff.toFixed(2) + "j";
                 grand += diff;
             });
             document.getElementById('total-sum').innerText = grand.toFixed(2) + "j";
@@ -167,73 +145,70 @@
 
         document.getElementById('ot-form').onsubmit = async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true; btn.innerText = "SEDANG MENYIMPAN...";
-
-            const rows = document.querySelectorAll('#rows-container > div');
-            const task = document.getElementById('ot-task').value;
-            const link = document.getElementById('ot-link').value;
-
-            for (const row of rows) {
-                const date = row.querySelector('.row-date').value;
-                const hours = row.querySelector('.row-sum').innerText.replace('j', '');
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'add_ot',
-                        tarikh: date,
-                        tugasan: task.trim(),
-                        jumlahJam: hours,
-                        linkSurat: link
-                    })
-                });
+            const btn = document.getElementById('submit-btn'); btn.disabled = true; btn.innerText = "MENYIMPAN...";
+            const task = document.getElementById('ot-task').value, link = document.getElementById('ot-link').value;
+            for (const row of document.querySelectorAll('#rows-container > div')) {
+                const date = row.querySelector('.r-date').value, hours = row.querySelector('.r-hrs').innerText.replace('j','');
+                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'add_ot', tarikh: date, tugasan: task.trim(), jumlahJam: hours, linkSurat: link })});
             }
             location.reload();
         };
 
+        // --- FUNGSI MOHON CUTI ---
+        function calcLeave() {
+            const s = document.getElementById('lv-s').value, e = document.getElementById('lv-e').value;
+            if(!s || !e) return;
+            const d1 = new Date(s), d2 = new Date(e);
+            const days = Math.ceil((d2 - d1) / 86400000) + 1;
+            document.getElementById('lv-d').value = days + " Hari";
+            let needed = 0; let temp = new Date(d1);
+            for(let i=0; i<days; i++) { needed += (temp.getDay() === 4) ? 7.5 : 9; temp.setDate(temp.getDate()+1); }
+            document.getElementById('lv-needed').innerText = needed.toFixed(2) + "j";
+            document.getElementById('lv-info').classList.remove('hidden');
+            const btn = document.getElementById('lv-btn');
+            if(needed > bakiSemasa) { btn.disabled = true; btn.classList.replace('btn-emerald', 'bg-red-500/20'); }
+            else { btn.disabled = false; btn.classList.replace('bg-red-500/20', 'btn-emerald'); }
+        }
+
+        document.getElementById('lv-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('lv-btn'); btn.innerText = "MEMPROSES...";
+            const payload = {
+                action: 'apply_leave',
+                startDate: document.getElementById('lv-s').value,
+                endDate: document.getElementById('lv-e').value,
+                bilHari: document.getElementById('lv-d').value,
+                jamDiperlukan: document.getElementById('lv-needed').innerText.replace('j','')
+            };
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            alert("Cuti berjaya dipohon! Sila semak RekodCuti di Google Sheets.");
+            location.reload();
+        };
+
+        // --- FUNGSI LOAD DATA (GROUPED) ---
         async function load() {
-            try {
-                const res = await fetch(SCRIPT_URL);
-                const json = await res.json();
-                const body = document.getElementById('table-body');
-                let grandBaki = 0;
-
-                // --- LOGIK GROUPING ---
-                const grouped = json.data.reduce((acc, curr) => {
-                    const key = curr.tugasan.trim();
-                    if (!acc[key]) {
-                        acc[key] = { name: key, hours: 0, start: curr.tarikh, end: curr.tarikh, status: curr.status, link: curr.linkSurat };
-                    }
-                    acc[key].hours += parseFloat(curr.jumlahJam);
-                    if (new Date(curr.tarikh) < new Date(acc[key].start)) acc[key].start = curr.tarikh;
-                    if (new Date(curr.tarikh) > new Date(acc[key].end)) acc[key].end = curr.tarikh;
-                    return acc;
-                }, {});
-
-                body.innerHTML = '';
-                Object.values(grouped).reverse().forEach(r => {
-                    if(r.status === 'Tersedia') grandBaki += r.hours;
-                    const d1 = new Date(r.start).toLocaleDateString('ms-MY', {day:'2-digit', month:'2-digit'});
-                    const d2 = new Date(r.end).toLocaleDateString('ms-MY', {day:'2-digit', month:'2-digit', year:'numeric'});
-                    const dateDisplay = r.start === r.end ? d2 : `${d1} - ${d2}`;
-
-                    body.innerHTML += `
-                        <tr class="hover:bg-white/[0.02] border-b border-white/5 transition-all">
-                            <td class="p-5 font-mono text-[10px] text-slate-500">${dateDisplay}</td>
-                            <td class="p-5">
-                                <div class="font-bold text-slate-200 uppercase text-[11px] leading-tight">${r.name}</div>
-                                ${r.link ? `<a href="${r.link}" target="_blank" class="text-[9px] text-blue-500 underline mt-1 block">📄 Lampiran</a>` : ''}
-                            </td>
-                            <td class="p-5 text-center font-black text-blue-400 text-sm">${r.hours.toFixed(2)}j</td>
-                            <td class="p-5 text-right">
-                                <span class="px-2 py-1 rounded text-[8px] font-black uppercase tracking-tighter ${r.status==='Tersedia'?'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20':'bg-red-500/10 text-red-500'}">
-                                    ${r.status}
-                                </span>
-                            </td>
-                        </tr>`;
-                });
-                document.getElementById('stat-baki').innerText = grandBaki.toFixed(2);
-            } catch (err) { console.error(err); }
+            const res = await fetch(API_URL); const json = await res.json();
+            const grouped = json.data.reduce((acc, curr) => {
+                const key = curr.tugasan.trim();
+                if (!acc[key]) acc[key] = { name: key, hrs: 0, s: curr.tarikh, e: curr.tarikh, stat: curr.status, link: curr.linkSurat };
+                acc[key].hrs += parseFloat(curr.jumlahJam);
+                if (new Date(curr.tarikh) < new Date(acc[key].s)) acc[key].s = curr.tarikh;
+                if (new Date(curr.tarikh) > new Date(acc[key].e)) acc[key].e = curr.tarikh;
+                return acc;
+            }, {});
+            const body = document.getElementById('table-body'); body.innerHTML = '';
+            Object.values(grouped).reverse().forEach(r => {
+                if(r.stat === 'Tersedia') bakiSemasa += r.hrs;
+                const d1 = new Date(r.s).toLocaleDateString('ms-MY', {day:'2-digit', month:'2-digit'});
+                const d2 = new Date(r.e).toLocaleDateString('ms-MY', {day:'2-digit', month:'2-digit', year:'numeric'});
+                body.innerHTML += `<tr class="border-b border-white/5 hover:bg-white/[0.02]">
+                    <td class="p-4 font-mono text-slate-500">${r.s === r.e ? d2 : d1 + ' - ' + d2}</td>
+                    <td class="p-4"><div class="font-bold uppercase">${r.name}</div>${r.link ? `<a href="${r.link}" target="_blank" class="text-blue-500 text-[9px] underline block">📄 Lampiran</a>`:''}</td>
+                    <td class="p-4 text-center font-black text-blue-400">${r.hrs.toFixed(2)}j</td>
+                    <td class="p-4 text-right"><span class="px-2 py-1 rounded text-[8px] font-black uppercase ${r.stat==='Tersedia'?'bg-emerald-500/10 text-emerald-400':'bg-red-500/10 text-red-500'}">${r.stat}</span></td>
+                </tr>`;
+            });
+            document.getElementById('stat-baki').innerText = bakiSemasa.toFixed(2);
         }
         load();
     </script>
