@@ -22,7 +22,7 @@
 
         <div id="page-main" class="space-y-8">
             <header class="flex justify-between items-end">
-                <h1 class="text-3xl font-black italic tracking-tighter uppercase">E-CUTI <span class="text-blue-500">v7.5</span></h1>
+                <h1 class="text-3xl font-black italic uppercase">E-CUTI <span class="text-blue-500">v7.6</span></h1>
                 <div class="text-right">
                     <p class="text-slate-500 text-[10px] font-black uppercase">Baki Jam Tersedia</p>
                     <div id="stat-baki" class="text-4xl font-black">0.00</div>
@@ -31,7 +31,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div class="lg:col-span-5 space-y-6">
-                    <div class="glass p-6 border border-white/5">
+                    <div class="glass p-6 border border-white/5 shadow-xl">
                         <h2 class="text-blue-400 font-black mb-4 text-[10px] uppercase italic tracking-widest">● Log OT Baharu</h2>
                         <form id="ot-form" class="space-y-3">
                             <div class="grid grid-cols-2 gap-3">
@@ -60,17 +60,17 @@
                             </div>
                             <input type="text" id="lv-d" class="input-style bg-white/5 opacity-60 text-[10px]" readonly placeholder="Ringkasan Hari">
                             <div id="lv-needed" class="text-emerald-400 font-black text-center text-sm">0.00j diperlukan</div>
-                            <button type="submit" id="lv-btn" class="bg-emerald-600 w-full py-3 rounded-xl font-black text-[10px] uppercase text-white hover:bg-emerald-700">Jana Lampiran A</button>
+                            <button type="submit" id="lv-btn" class="bg-emerald-600 w-full py-3 rounded-xl font-black text-[10px] uppercase text-white">Jana Lampiran A</button>
                         </form>
                     </div>
                 </div>
 
                 <div class="lg:col-span-7 glass overflow-hidden h-[600px] flex flex-col">
-                    <div class="p-4 bg-white/5 font-black uppercase text-[9px] tracking-widest text-slate-500 border-b border-white/5 text-center">Analisis Jam Tersedia (FIFO)</div>
+                    <div class="p-4 bg-white/5 font-black uppercase text-[9px] tracking-widest text-slate-500 border-b border-white/5 text-center">Tugasan Tersedia (Belum Guna/Luput)</div>
                     <div class="overflow-y-auto flex-grow">
                         <table class="w-full text-left text-[11px]">
                             <thead class="bg-white/5 sticky top-0 uppercase text-slate-500">
-                                <tr><th class="p-4">Tarikh & Luput</th><th class="p-4">Tugasan</th><th class="p-4 text-center">Jam</th><th class="p-4 text-right">Status</th></tr>
+                                <tr><th class="p-4">Tarikh & Luput</th><th class="p-4">Butiran Tugasan</th><th class="p-4 text-center">Jam</th><th class="p-4 text-right">Status</th></tr>
                             </thead>
                             <tbody id="table-body" class="divide-y divide-white/5"></tbody>
                         </table>
@@ -80,10 +80,10 @@
         </div>
 
         <div id="page-history" class="hidden glass overflow-hidden min-h-[500px]">
-            <div class="p-6 bg-white/5 font-black uppercase text-xs tracking-widest">Rekod Penggunaan Cuti Gantian</div>
+            <div class="p-6 bg-white/5 font-black uppercase text-xs tracking-widest">Sejarah Penggunaan Cuti Gantian</div>
             <table class="w-full text-left text-[11px]">
                 <thead class="bg-white/10 uppercase">
-                    <tr><th class="p-5">Tarikh</th><th class="p-5">Cuti</th><th class="p-5 text-center">Jam</th><th class="p-5">Tugasan</th><th class="p-5 text-right">Aksi</th></tr>
+                    <tr><th class="p-5">Tarikh</th><th class="p-5">Tempoh Cuti</th><th class="p-5 text-center">Jam Diguna</th><th class="p-5">Tugasan Terlibat</th><th class="p-5 text-right">Aksi</th></tr>
                 </thead>
                 <tbody id="history-body" class="divide-y divide-white/5"></tbody>
             </table>
@@ -98,11 +98,16 @@
             const res = await fetch(API); const json = await res.json();
             const body = document.getElementById('table-body'); body.innerHTML = '';
             let total = 0; const today = new Date(); bakiSemasa = 0;
-            const sorted = json.data.sort((a,b) => new Date(a.luput) - new Date(b.luput));
-            sorted.forEach(r => {
+            
+            // TAPIS HANYA 'TERSEDIA' & BELUM LUPUT
+            const available = json.data.filter(r => {
                 const diff = Math.ceil((new Date(r.luput) - today) / (1000*60*60*24));
-                if (r.status === 'Tersedia' && diff > 0) bakiSemasa += parseFloat(r.jumlahJam);
-                body.innerHTML += `<tr class="border-b border-white/5"><td class="p-4 font-mono text-slate-400">${new Date(r.tarikh).toLocaleDateString('ms-MY')}<br><span class="text-[8px] uppercase ${diff<=0?'text-red-500':'text-slate-500'}">Luput: ${new Date(r.luput).toLocaleDateString('ms-MY')}</span></td><td class="p-4 font-bold uppercase leading-tight">${r.tugasan}</td><td class="p-4 text-center font-black text-blue-400">${parseFloat(r.jumlahJam).toFixed(2)}j</td><td class="p-4 text-right"><span class="px-2 py-1 rounded text-[8px] font-black uppercase ${r.status==='Tersedia'&&diff>0?'bg-emerald-500/10 text-emerald-400':'bg-red-500/10 text-red-500'}">${r.status==='Tersedia'&&diff>0?'TERSEDIA':'TIADA/LUPUT'}</span></td></tr>`;
+                return r.status === 'Tersedia' && diff > 0;
+            }).sort((a,b) => new Date(a.luput) - new Date(b.luput));
+
+            available.forEach(r => {
+                bakiSemasa += parseFloat(r.jumlahJam);
+                body.innerHTML += `<tr class="border-b border-white/5"><td class="p-4 font-mono text-slate-400">${new Date(r.tarikh).toLocaleDateString('ms-MY')}<br><span class="text-[8px] uppercase text-slate-500">Luput: ${new Date(r.luput).toLocaleDateString('ms-MY')}</span></td><td class="p-4 font-bold uppercase leading-tight">${r.tugasan}</td><td class="p-4 text-center font-black text-blue-400">${parseFloat(r.jumlahJam).toFixed(2)}j</td><td class="p-4 text-right"><span class="px-2 py-1 rounded text-[8px] font-black uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">TERSEDIA</span></td></tr>`;
             });
             document.getElementById('stat-baki').innerText = bakiSemasa.toFixed(2);
         }
@@ -120,7 +125,7 @@
             if(!s || !e) return;
             document.getElementById('daily-editor').classList.remove('hidden');
             const cont = document.getElementById('rows-container'); cont.innerHTML = '';
-            let cur = new Date(s), total = 0;
+            let cur = new Date(s);
             while(cur <= new Date(e)) {
                 let dStr = cur.toISOString().split('T')[0];
                 cont.innerHTML += `<div class="bg-white/5 p-2 rounded text-[10px] flex justify-between"><span>${dStr}</span> <input type="number" step="0.5" value="9" class="bg-transparent text-right w-12 border-b border-blue-500/30 day-hrs" onchange="sumOT()"></div>`;
