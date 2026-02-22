@@ -22,7 +22,7 @@
 
         <div id="page-main" class="space-y-8">
             <header class="flex justify-between items-end">
-                <h1 class="text-3xl font-black italic tracking-tighter uppercase">E-CUTI <span class="text-blue-500">v7.2</span></h1>
+                <h1 class="text-3xl font-black italic tracking-tighter uppercase">E-CUTI <span class="text-blue-500">v7.5</span></h1>
                 <div class="text-right">
                     <p class="text-slate-500 text-[10px] font-black uppercase">Baki Jam Tersedia</p>
                     <div id="stat-baki" class="text-4xl font-black">0.00</div>
@@ -31,15 +31,23 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div class="lg:col-span-5 space-y-6">
-                    <div class="glass p-6 border border-white/5 shadow-xl">
+                    <div class="glass p-6 border border-white/5">
                         <h2 class="text-blue-400 font-black mb-4 text-[10px] uppercase italic tracking-widest">● Log OT Baharu</h2>
                         <form id="ot-form" class="space-y-3">
                             <div class="grid grid-cols-2 gap-3">
-                                <input type="date" id="ot-date-start" class="input-style" required>
-                                <input type="date" id="ot-date-end" class="input-style" required>
+                                <input type="date" id="ot-date-start" class="input-style" required onchange="calcDailyHours()">
+                                <input type="date" id="ot-date-end" class="input-style" required onchange="calcDailyHours()">
                             </div>
-                            <input type="text" id="ot-task" placeholder="Tajuk Tugasan" class="input-style" required>
-                            <button type="submit" class="bg-blue-600 w-full py-3 rounded-xl font-black text-[10px] uppercase text-white hover:bg-blue-700">Simpan OT</button>
+                            <input type="text" id="ot-task" placeholder="Nama Tugasan / Aktiviti" class="input-style" required>
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" id="ot-tempat" placeholder="Tempat Aktiviti" class="input-style" required>
+                                <input type="text" id="ot-penganjur" placeholder="Penganjur" class="input-style" required>
+                            </div>
+                            <div id="daily-editor" class="hidden p-3 bg-white/5 rounded-xl border border-white/5 space-y-2">
+                                <div id="rows-container" class="space-y-2 max-h-[150px] overflow-y-auto"></div>
+                                <div class="text-right text-blue-400 font-black text-xs" id="total-sum">0.00j</div>
+                            </div>
+                            <button type="submit" id="ot-submit" class="bg-blue-600 w-full py-3 rounded-xl font-black text-[10px] uppercase text-white hover:bg-blue-700">Simpan OT</button>
                         </form>
                     </div>
 
@@ -52,7 +60,7 @@
                             </div>
                             <input type="text" id="lv-d" class="input-style bg-white/5 opacity-60 text-[10px]" readonly placeholder="Ringkasan Hari">
                             <div id="lv-needed" class="text-emerald-400 font-black text-center text-sm">0.00j diperlukan</div>
-                            <button type="submit" id="lv-btn" class="bg-emerald-600 w-full py-3 rounded-xl font-black text-[10px] uppercase text-white hover:bg-emerald-700">Tolak Jam & Mohon</button>
+                            <button type="submit" id="lv-btn" class="bg-emerald-600 w-full py-3 rounded-xl font-black text-[10px] uppercase text-white hover:bg-emerald-700">Jana Lampiran A</button>
                         </form>
                     </div>
                 </div>
@@ -62,7 +70,7 @@
                     <div class="overflow-y-auto flex-grow">
                         <table class="w-full text-left text-[11px]">
                             <thead class="bg-white/5 sticky top-0 uppercase text-slate-500">
-                                <tr><th class="p-4">Tarikh & Luput</th><th class="p-4">Butiran Tugasan</th><th class="p-4 text-center">Jam</th><th class="p-4 text-right">Status</th></tr>
+                                <tr><th class="p-4">Tarikh & Luput</th><th class="p-4">Tugasan</th><th class="p-4 text-center">Jam</th><th class="p-4 text-right">Status</th></tr>
                             </thead>
                             <tbody id="table-body" class="divide-y divide-white/5"></tbody>
                         </table>
@@ -75,7 +83,7 @@
             <div class="p-6 bg-white/5 font-black uppercase text-xs tracking-widest">Rekod Penggunaan Cuti Gantian</div>
             <table class="w-full text-left text-[11px]">
                 <thead class="bg-white/10 uppercase">
-                    <tr><th class="p-5">Tarikh Mohon</th><th class="p-5">Tempoh Cuti</th><th class="p-5 text-center">Jam Diguna</th><th class="p-5">Tugasan Terlibat</th></tr>
+                    <tr><th class="p-5">Tarikh</th><th class="p-5">Cuti</th><th class="p-5 text-center">Jam</th><th class="p-5">Tugasan</th><th class="p-5 text-right">Aksi</th></tr>
                 </thead>
                 <tbody id="history-body" class="divide-y divide-white/5"></tbody>
             </table>
@@ -87,44 +95,62 @@
         let bakiSemasa = 0;
 
         async function load() {
-            try {
-                const res = await fetch(API); 
-                const json = await res.json();
-                const body = document.getElementById('table-body'); body.innerHTML = '';
-                const today = new Date(); bakiSemasa = 0;
-
-                const sorted = json.data.sort((a,b) => new Date(a.luput) - new Date(b.luput));
-                sorted.forEach(r => {
-                    const tLp = new Date(r.luput);
-                    const diff = Math.ceil((tLp - today) / (1000*60*60*24));
-                    if (r.status === 'Tersedia' && diff > 0) bakiSemasa += parseFloat(r.jumlahJam);
-
-                    body.innerHTML += `<tr class="border-b border-white/5">
-                        <td class="p-4"><div class="font-mono text-white">${new Date(r.tarikh).toLocaleDateString('ms-MY')}</div>
-                        <div class="text-[8px] uppercase ${diff<=0?'text-red-500':'text-slate-500'}">Luput: ${tLp.toLocaleDateString('ms-MY')}</div></td>
-                        <td class="p-4 font-bold uppercase leading-tight">${r.tugasan}</td>
-                        <td class="p-4 text-center font-black text-blue-400">${parseFloat(r.jumlahJam).toFixed(2)}j</td>
-                        <td class="p-4 text-right"><span class="px-2 py-1 rounded text-[8px] font-black uppercase ${r.status==='Tersedia'&&diff>0?'bg-emerald-500/10 text-emerald-400':'bg-red-500/10 text-red-500'}">${r.status==='Tersedia'&&diff>0?'TERSEDIA':'TIADA/LUPUT'}</span></td>
-                    </tr>`;
-                });
-                document.getElementById('stat-baki').innerText = bakiSemasa.toFixed(2);
-            } catch(e) { console.error("Load Error"); }
+            const res = await fetch(API); const json = await res.json();
+            const body = document.getElementById('table-body'); body.innerHTML = '';
+            let total = 0; const today = new Date(); bakiSemasa = 0;
+            const sorted = json.data.sort((a,b) => new Date(a.luput) - new Date(b.luput));
+            sorted.forEach(r => {
+                const diff = Math.ceil((new Date(r.luput) - today) / (1000*60*60*24));
+                if (r.status === 'Tersedia' && diff > 0) bakiSemasa += parseFloat(r.jumlahJam);
+                body.innerHTML += `<tr class="border-b border-white/5"><td class="p-4 font-mono text-slate-400">${new Date(r.tarikh).toLocaleDateString('ms-MY')}<br><span class="text-[8px] uppercase ${diff<=0?'text-red-500':'text-slate-500'}">Luput: ${new Date(r.luput).toLocaleDateString('ms-MY')}</span></td><td class="p-4 font-bold uppercase leading-tight">${r.tugasan}</td><td class="p-4 text-center font-black text-blue-400">${parseFloat(r.jumlahJam).toFixed(2)}j</td><td class="p-4 text-right"><span class="px-2 py-1 rounded text-[8px] font-black uppercase ${r.status==='Tersedia'&&diff>0?'bg-emerald-500/10 text-emerald-400':'bg-red-500/10 text-red-500'}">${r.status==='Tersedia'&&diff>0?'TERSEDIA':'TIADA/LUPUT'}</span></td></tr>`;
+            });
+            document.getElementById('stat-baki').innerText = bakiSemasa.toFixed(2);
         }
 
         async function loadHistory() {
-            try {
-                const res = await fetch(`${API}?action=getHistory`); 
-                const json = await res.json();
-                const body = document.getElementById('history-body'); body.innerHTML = '';
-                json.data.reverse().forEach(row => {
-                    body.innerHTML += `<tr>
-                        <td class="p-5 font-mono text-slate-400">${new Date(row.tarikhMohon).toLocaleDateString('ms-MY')}</td>
-                        <td class="p-5 font-bold uppercase">${row.mula} ke ${row.tamat}</td>
-                        <td class="p-5 text-center font-black text-red-400">-${parseFloat(row.jam).toFixed(2)}j</td>
-                        <td class="p-5 text-[10px] text-slate-500 italic uppercase leading-tight">${row.tugasan}</td>
-                    </tr>`;
-                });
-            } catch(e) { console.error("History Error"); }
+            const res = await fetch(`${API}?action=getHistory`); const json = await res.json();
+            const body = document.getElementById('history-body'); body.innerHTML = '';
+            json.data.reverse().forEach(row => {
+                body.innerHTML += `<tr><td class="p-5 font-mono text-slate-400">${new Date(row.tarikhMohon).toLocaleDateString('ms-MY')}</td><td class="p-5 font-bold uppercase">${row.mula} ke ${row.tamat}</td><td class="p-5 text-center font-black text-red-400">-${parseFloat(row.jam).toFixed(2)}j</td><td class="p-5 text-[10px] text-slate-500 italic uppercase leading-tight">${row.tugasan}</td><td class="p-5 text-right"><a href="${row.url}" target="_blank" class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg text-[9px] font-bold">📄 CETAK</a></td></tr>`;
+            });
+        }
+
+        function calcDailyHours() {
+            const s = document.getElementById('ot-date-start').value, e = document.getElementById('ot-date-end').value;
+            if(!s || !e) return;
+            document.getElementById('daily-editor').classList.remove('hidden');
+            const cont = document.getElementById('rows-container'); cont.innerHTML = '';
+            let cur = new Date(s), total = 0;
+            while(cur <= new Date(e)) {
+                let dStr = cur.toISOString().split('T')[0];
+                cont.innerHTML += `<div class="bg-white/5 p-2 rounded text-[10px] flex justify-between"><span>${dStr}</span> <input type="number" step="0.5" value="9" class="bg-transparent text-right w-12 border-b border-blue-500/30 day-hrs" onchange="sumOT()"></div>`;
+                cur.setDate(cur.getDate() + 1);
+            }
+            sumOT();
+        }
+
+        function sumOT() {
+            let s = 0; document.querySelectorAll('.day-hrs').forEach(i => s += parseFloat(i.value || 0));
+            document.getElementById('total-sum').innerText = s.toFixed(2) + "j";
+        }
+
+        document.getElementById('ot-form').onsubmit = async (e) => {
+            e.preventDefault(); const btn = document.getElementById('ot-submit'); btn.innerText = "MENYIMPAN...";
+            const task = document.getElementById('ot-task').value, tempat = document.getElementById('ot-tempat').value, penganjur = document.getElementById('ot-penganjur').value;
+            const rows = document.querySelectorAll('#rows-container > div');
+            for (const row of rows) {
+                const date = row.querySelector('span').innerText, hrs = row.querySelector('input').value;
+                await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'add_ot', tarikh: date, tugasan: task, jumlahJam: hrs, tempat: tempat, penganjur: penganjur })});
+            }
+            location.reload();
+        }
+
+        document.getElementById('lv-form').onsubmit = async (e) => {
+            e.preventDefault(); const btn = document.getElementById('lv-btn'); btn.innerText = "MENJANA...";
+            const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'apply_leave', startDate: document.getElementById('lv-s').value, endDate: document.getElementById('lv-e').value, bilHari: document.getElementById('lv-d').value, jamDiperlukan: document.getElementById('lv-needed').innerText.split(' ')[0] })});
+            const json = await res.json();
+            if(json.url) window.open(json.url, '_blank');
+            location.reload();
         }
 
         function calcLeave() {
@@ -137,7 +163,7 @@
                 if(day !== 5 && day !== 6) { wDays++; needed += (day === 4) ? 7.5 : 9; }
                 temp.setDate(temp.getDate() + 1);
             }
-            document.getElementById('lv-d').value = `${wDays} Hari Bekerja (Tolak Jumaat/Sabtu)`;
+            document.getElementById('lv-d').value = `${wDays} Hari Bekerja (Tolak Jum/Sab)`;
             document.getElementById('lv-needed').innerText = needed.toFixed(2) + "j diperlukan";
         }
 
@@ -147,19 +173,6 @@
             document.getElementById('nav-main').classList.toggle('nav-active', p === 'main');
             document.getElementById('nav-history').classList.toggle('nav-active', p === 'history');
             if(p === 'history') loadHistory();
-        }
-
-        document.getElementById('lv-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('lv-btn'); btn.innerText = "MENOLAK JAM...";
-            const res = await fetch(API, { method: 'POST', body: JSON.stringify({
-                action: 'apply_leave',
-                startDate: document.getElementById('lv-s').value,
-                endDate: document.getElementById('lv-e').value,
-                bilHari: document.getElementById('lv-d').value,
-                jamDiperlukan: document.getElementById('lv-needed').innerText.split(' ')[0]
-            })});
-            if(res.ok) { alert("Jam Berjaya Ditolak!"); location.reload(); }
         }
 
         load();
